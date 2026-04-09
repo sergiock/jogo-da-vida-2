@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faixas · Tik Tak Som</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0a;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .wrap{width:100%;max-width:600px}
+  .stage{width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;border-radius:12px;background:#0a0a0a;cursor:pointer}
+  .ball{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translateX(-50%);opacity:0;z-index:10}
+  .ball.red{background:#E24B4A;top:2%}
+  .ball.blue{background:#378ADD;bottom:2%}
+  .ring{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;z-index:11}
+  .axis{position:absolute;left:0;right:0;top:50%;height:0.5px;background:rgba(255,255,255,0.2);z-index:9}
+  .lbl{position:absolute;left:50%;transform:translateX(-50%);font-weight:500;opacity:0;z-index:12;letter-spacing:0.05em;pointer-events:none}
+  .lbl.tik{top:4%;color:#fff}
+  .lbl.tak{bottom:4%;color:#fff}
+  .hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:rgba(255,255,255,0.6);text-align:center;pointer-events:none;z-index:20;line-height:1.7}
+  .controls{display:flex;align-items:center;gap:8px;padding:0.7rem 0 0;flex-wrap:wrap}
+  .btn{padding:5px 13px;border:0.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:12px;background:transparent;color:#ccc;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:rgba(255,255,255,0.08)}
+  .btn.on{background:rgba(255,255,255,0.12);font-weight:500;color:#fff}
+  .sep{width:0.5px;height:18px;background:rgba(255,255,255,0.15);flex-shrink:0}
+  .lc{font-size:12px;color:#888;white-space:nowrap}
+  .gc{display:flex;align-items:center;gap:6px}
+  .gc input{width:70px;accent-color:#fff}
+  .gv{font-size:12px;font-weight:500;font-family:monospace;min-width:22px;color:#fff}
+  a.back{display:inline-block;margin-bottom:1rem;font-size:12px;color:#555;text-decoration:none}
+  a.back:hover{color:#aaa}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← índice</a>
+<div class="wrap">
+  <div class="stage" id="stage" onclick="initAudio()">
+    <canvas id="cv"></canvas>
+    <div class="axis"></div>
+    <div class="ball red" id="ball-red"></div>
+    <div class="ball blue" id="ball-blue"></div>
+    <div class="ring" id="ring"></div>
+    <div class="lbl tik" id="lbl-tik">tik</div>
+    <div class="lbl tak" id="lbl-tak">tak</div>
+    <div class="hint" id="hint">toque para ativar o som</div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="btn-play" onclick="togglePlay()">⏸ pausar</button>
+    <div class="sep"></div>
+    <span class="lc">direção</span>
+    <button class="btn on" id="btn-h" onclick="setDir('h')">horizontal</button>
+    <button class="btn" id="btn-v" onclick="setDir('v')">vertical</button>
+    <div class="sep"></div>
+    <span class="lc">modo</span>
+    <button class="btn on" id="btn-m1" onclick="setMode(1)">→ linear</button>
+    <button class="btn" id="btn-m2" onclick="setMode(2)">⇄ espelho</button>
+    <button class="btn" id="btn-m3" onclick="setMode(3)">⇆ alternância</button>
+    <div class="sep"></div>
+    <div class="gc"><span class="lc">faixas</span><input type="range" min="1" max="12" step="1" value="6" oninput="setN(+this.value)"><span class="gv" id="val-n">6</span></div>
+    <div class="sep"></div>
+    <span class="lc">bpm</span>
+    <input type="range" min="20" max="200" step="1" value="60" oninput="setBpm(+this.value)" style="width:75px;accent-color:#fff">
+    <span class="gv" id="val-bpm">60</span>
+  </div>
+</div>
+<script>
+  let N=6,bpm=60,playing=true,dir='h',mode=1,seq=[],seqIdx=0,pos=0,visited=[],stepTimer=null,rafId=null,pulseT=0,lastStep=0,stepMs=500,audioCtx=null,audioReady=false,beatCount=0;
+  const stage=document.getElementById('stage'),cv=document.getElementById('cv'),ctx=cv.getContext('2d'),bRed=document.getElementById('ball-red'),bBlue=document.getElementById('ball-blue'),ring=document.getElementById('ring'),lTik=document.getElementById('lbl-tik'),lTak=document.getElementById('lbl-tak'),hint=document.getElementById('hint'),BG='#0a0a0a';
+  function getColor(i,n,dim){if(n===1)return dim?'rgba(255,255,255,0.12)':'#ffffff';const lo=Math.floor(n/2),hi=Math.ceil(n/2);if(i<lo)return dim?'rgba(226,75,74,0.22)':'#E24B4A';if(i>=hi)return dim?'rgba(55,138,221,0.22)':'#378ADD';return dim?'rgba(255,255,255,0.18)':'#ffffff';}
+  function resize(){const s=stage.offsetWidth,dpr=window.devicePixelRatio||1;cv.width=s*dpr;cv.height=s*dpr;cv.style.width=s+'px';cv.style.height=s+'px';ctx.setTransform(1,0,0,1,0,0);ctx.scale(dpr,dpr);const sz=Math.round(s*0.62);bRed.style.width=sz+'px';bBlue.style.width=sz+'px';const fs=Math.round(s*0.06);lTik.style.fontSize=fs+'px';lTak.style.fontSize=fs+'px';}
+  window.addEventListener('resize',resize);
+  function drawFrame(){const s=stage.offsetWidth,span=s/N;ctx.clearRect(0,0,s,s);ctx.fillStyle=BG;ctx.fillRect(0,0,s,s);const pulse=0.72+0.28*Math.sin(pulseT*Math.PI);const base=Math.max(11,Math.min(span*0.52,s*0.09));for(let i=0;i<N;i++){const isLit=i===pos,wasLit=visited.includes(i)&&!isLit,color=getColor(i,N,!isLit);let x,y,w,h;if(dir==='h'){x=0;y=i*span;w=s;h=span;}else{x=i*span;y=0;w=span;h=s;}ctx.fillStyle=color;ctx.globalAlpha=isLit?1:(wasLit?0.28:0.08);ctx.fillRect(x,y,w,h);ctx.globalAlpha=1;if(isLit){ctx.strokeStyle='#fff';ctx.globalAlpha=0.1;ctx.lineWidth=0.5;ctx.strokeRect(x+.25,y+.25,w-.5,h-.5);ctx.globalAlpha=1;}const fs=isLit?base*(1+0.55*pulse):base;ctx.font='500 '+fs.toFixed(1)+'px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffffff';ctx.globalAlpha=isLit?1:(wasLit?0.25:0.12);const cx=dir==='h'?s/2:x+span/2,cy=dir==='h'?y+span/2:s/2;ctx.fillText(i+1,cx,cy);ctx.globalAlpha=1;}}
+  function animLoop(ts){pulseT=Math.min((ts-lastStep)/stepMs,1);drawFrame();rafId=requestAnimationFrame(animLoop);}
+  function initAudio(){if(audioReady)return;audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();audioReady=true;hint.style.display='none';}
+  function playTone(freq,gain,dur){if(!audioReady||!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(gain,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);o.start();o.stop(audioCtx.currentTime+dur);}
+  function animRing(tik){const s=stage.offsetWidth,sz=Math.round(s*0.62);ring.style.width=sz+'px';ring.style.height=sz+'px';ring.style.left='50%';ring.style.top=tik?(sz/2+s*0.02)+'px':(s-sz/2-s*0.02)+'px';ring.style.border='2px solid '+(tik?'#E24B4A':'#378ADD');ring.style.opacity='0.9';ring.style.transition='none';ring.style.transform='translate(-50%,-50%) scale(1)';requestAnimationFrame(()=>requestAnimationFrame(()=>{ring.style.transition='transform 0.5s ease-out,opacity 0.5s ease-out';ring.style.transform='translate(-50%,-50%) scale(1.4)';ring.style.opacity='0';}));}
+  function showBeat(tik){if(tik){playTone(1200,0.45,0.07);bRed.style.opacity='1';bBlue.style.opacity='0';lTik.style.opacity='1';lTak.style.opacity='0';}else{playTone(400,0.38,0.13);bBlue.style.opacity='1';bRed.style.opacity='0';lTak.style.opacity='1';lTik.style.opacity='0';}animRing(tik);}
+  function hideBalls(){bRed.style.opacity='0';bBlue.style.opacity='0';lTik.style.opacity='0';lTak.style.opacity='0';}
+  function getStepMs(){return Math.round(60000/bpm/2);}
+  function buildSequence(){if(mode===1)return Array.from({length:N},(_,i)=>i);if(mode===2){const s=[];for(let i=0;i<N;i++)s.push(i);for(let i=N-2;i>=1;i--)s.push(i);return s;}const s=[];for(let i=0;i<N;i++)s.push(i);for(let i=N-2;i>=1;i--)s.push(i);for(let i=1;i<N;i++)s.push(i);return s;}
+  function tick(ts){lastStep=ts||performance.now();stepMs=getStepMs()*2;pos=seq[seqIdx];visited=seq.slice(0,seqIdx);seqIdx=(seqIdx+1)%seq.length;if(seqIdx===0)visited=[];const tik=(beatCount%2===0);beatCount++;showBeat(tik);stepTimer=setTimeout(()=>{hideBalls();stepTimer=setTimeout(()=>requestAnimationFrame(tick),getStepMs());},getStepMs());}
+  function stopAll(){if(stepTimer){clearTimeout(stepTimer);stepTimer=null;}if(rafId){cancelAnimationFrame(rafId);rafId=null;}hideBalls();}
+  function startAll(){stopAll();seq=buildSequence();seqIdx=0;pos=seq[0];visited=[];beatCount=0;lastStep=performance.now();stepMs=getStepMs()*2;rafId=requestAnimationFrame(animLoop);requestAnimationFrame(tick);}
+  function togglePlay(){playing=!playing;document.getElementById('btn-play').textContent=playing?'⏸ pausar':'▶ play';if(playing)startAll();else stopAll();}
+  function setDir(d){dir=d;document.getElementById('btn-h').classList.toggle('on',d==='h');document.getElementById('btn-v').classList.toggle('on',d==='v');startAll();}
+  function setMode(m){mode=m;[1,2,3].forEach(i=>document.getElementById('btn-m'+i).classList.toggle('on',i===m));startAll();}
+  function setN(v){N=v;document.getElementById('val-n').textContent=v;startAll();}
+  function setBpm(v){bpm=v;document.getElementById('val-bpm').textContent=v;if(playing)startAll();}
+  resize();startAll();
+</script>
+</body>
+</html>

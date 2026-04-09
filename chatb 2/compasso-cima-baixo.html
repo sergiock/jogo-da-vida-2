@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Compasso · Cima · Baixo</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0a;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .wrap{width:100%;max-width:600px}
+  .tl{width:100%;height:48px;position:relative;margin-bottom:2px}
+  .tl-line{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,.15)}
+  .tl-dot{position:absolute;width:10px;height:10px;border-radius:50%;top:50%;transform:translate(-50%,-50%);transition:opacity .15s,width .15s,height .15s;opacity:.1}
+  .tl-dot.red{background:#E24B4A}.tl-dot.blue{background:#378ADD}
+  .tl-dot.visited{opacity:.3}.tl-dot.active{opacity:1;width:14px;height:14px}
+  .stage{width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;border-radius:12px;background:#0a0a0a;cursor:pointer}
+  .axis{position:absolute;left:0;right:0;top:50%;height:.5px;background:rgba(255,255,255,.2);z-index:9}
+  .ball{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translateX(-50%);opacity:0}
+  .ball.red{background:#E24B4A;top:2%}.ball.blue{background:#378ADD;bottom:2%}
+  .lbl{position:absolute;left:50%;transform:translateX(-50%);font-size:clamp(13px,2vw,18px);font-weight:500;opacity:0}
+  .lbl.tik{top:4%;color:#A32D2D}.lbl.tak{bottom:4%;color:#185FA5}
+  .ring{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none}
+  
+  .hud{position:absolute;bottom:12px;right:14px;display:flex;align-items:baseline;gap:8px;z-index:50;pointer-events:none;}
+  .hud-name{font-size:11px;color:rgba(255,255,255,0.28);font-family:monospace;letter-spacing:0.06em;}
+  .hud-sym{font-size:28px;font-weight:500;color:rgba(255,255,255,0.9);font-family:monospace;line-height:1;min-width:32px;text-align:right;}
+
+  .cb{display:flex;align-items:center;gap:10px;padding:.7rem 0 0;flex-wrap:wrap}
+  .btn{padding:6px 16px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:13px;background:transparent;color:#ccc;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,.08)}.btn.on{background:rgba(255,255,255,.12);font-weight:500;color:#fff}
+  .lbl-c{font-size:13px;color:#888;white-space:nowrap}
+  .gv{font-size:13px;font-weight:500;font-family:monospace;min-width:32px;color:#fff}
+  .sound-btn{padding:5px 13px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:12px;background:transparent;color:#888;cursor:pointer}
+  .sound-btn.on{color:#fff;border-color:rgba(255,255,255,.4)}
+</style>
+</head>
+<body>
+<a style="display:inline-block;margin-bottom:.8rem;font-size:12px;color:#555;text-decoration:none;" href="index.html" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">← índice</a>
+
+<div class="wrap">
+  <div class="tl" id="tl"><div class="tl-line"></div></div>
+  <div class="stage" id="stage" onclick="initAudio()">
+    <div class="axis"></div>
+    <div class="ball red"  id="ball-red"></div>
+    <div class="ball blue" id="ball-blue"></div>
+    <div class="ring"      id="ring"></div>
+    <div class="lbl tik"   id="lbl-tik">tik</div>
+    <div class="lbl tak"   id="lbl-tak">tak</div>
+    <div class="hud"><span class="hud-name">compasso · cima · baixo</span><span class="hud-sym" id="hud-sym">tik</span></div>
+  </div>
+  <div class="cb">
+    <button class="btn" id="btn-play" onclick="togglePlay()">⏸ pausar</button>
+    <button class="sound-btn" id="snd-btn" onclick="toggleSound()">♪ som off</button>
+    <div style="width:.5px;height:18px;background:rgba(255,255,255,0.15)"></div>
+    <span class="lbl-c">bpm</span>
+    <input type="range" min="20" max="200" step="1" value="60" oninput="setBpm(+this.value)" style="width:90px;accent-color:#fff">
+    <span class="gv" id="bpm-lbl">60</span>
+    <div style="width:.5px;height:18px;background:rgba(255,255,255,0.15)"></div>
+    <span class="lbl-c">÷</span>
+    <button class="btn on" id="d2" onclick="setDiv(1)">÷2</button>
+    <button class="btn"    id="d4" onclick="setDiv(2)">÷4</button>
+    <button class="btn"    id="d8" onclick="setDiv(3)">÷8</button>
+    <button class="btn"    id="d3" onclick="setDivT(3)">÷3</button>
+    <button class="btn"    id="d6" onclick="setDivT(6)">÷6</button>
+  </div>
+</div>
+<script>
+  let playing=true,bpm=60,divN=1,divMode='bin',divT=3,timer=null,stepN=0;
+  let audioCtx=null,audioOn=false;
+  let visited=new Set(),ballSz=0;
+  const stage=document.getElementById('stage');
+  const tl=document.getElementById('tl');
+  const bRed=document.getElementById('ball-red');
+  const bBlue=document.getElementById('ball-blue');
+  const ring=document.getElementById('ring');
+  const lTik=document.getElementById('lbl-tik');
+  const lTak=document.getElementById('lbl-tak');
+  const hudSym=document.getElementById('hud-sym');
+
+  function setBallSize(){ballSz=Math.round(stage.offsetWidth*.44);bRed.style.width=ballSz+'px';bBlue.style.width=ballSz+'px';}
+  window.addEventListener('resize',setBallSize);setBallSize();
+
+  function buildTl(parts){
+    tl.innerHTML='<div class="tl-line"></div>';
+    for(let i=0;i<parts;i++){
+      const pct=parts===1?50:(i/(parts-1))*88+6;
+      const d=document.createElement('div');
+      d.className='tl-dot '+(i%2===0?'red':'blue');
+      d.id='dot-'+i;d.style.left=pct+'%';tl.appendChild(d);
+    }
+  }
+  function updateDots(beatIdx,parts){
+    for(let i=0;i<parts;i++){
+      const d=document.getElementById('dot-'+i);if(!d)continue;
+      d.classList.remove('active','visited');
+      if(i===beatIdx)d.classList.add('active');
+      else if(visited.has(i))d.classList.add('visited');
+    }
+  }
+  function initAudio(){
+    if(audioCtx)return;
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended')audioCtx.resume();
+  }
+  function toggleSound(){
+    audioOn=!audioOn;
+    const b=document.getElementById('snd-btn');
+    b.textContent=audioOn?'♪ som on':'♪ som off';b.classList.toggle('on',audioOn);
+    if(audioOn&&!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    if(audioOn&&audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+  }
+  function beep(freq,gain,dur){
+    if(!audioOn||!audioCtx)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);o.type='sine';
+    o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+    g.gain.setValueAtTime(gain,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+    o.start();o.stop(audioCtx.currentTime+dur);
+  }
+  function animRing(tikMode){
+    const s=stage.offsetWidth;
+    ring.style.width=ballSz+'px';ring.style.height=ballSz+'px';ring.style.left='50%';
+    ring.style.top=tikMode?(ballSz/2+s*.02)+'px':(s-ballSz/2-s*.02)+'px';
+    ring.style.border='2px solid '+(tikMode?'#E24B4A':'#378ADD');
+    ring.style.opacity='.9';ring.style.transition='none';ring.style.transform='translate(-50%,-50%) scale(1)';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      ring.style.transition='transform .5s ease-out,opacity .5s ease-out';
+      ring.style.transform='translate(-50%,-50%) scale(1.4)';ring.style.opacity='0';
+    }));
+  }
+  function getParts(){return divMode==='bin'?Math.pow(2,divN):divT;}
+  function getHalfMs(){return(60000/bpm)/getParts()/2;}
+
+  function show(tikMode,beatIdx){
+    visited.add(beatIdx);
+    const parts=getParts();updateDots(beatIdx,parts);
+    beep(tikMode?1200:400,tikMode?.45:.38,tikMode?.07:.13);
+    bRed.style.opacity=tikMode?'1':'0';bBlue.style.opacity=tikMode?'0':'1';
+    lTik.style.opacity=tikMode?'1':'0';lTak.style.opacity=tikMode?'0':'1';
+    animRing(tikMode);
+    if(hudSym)hudSym.textContent=tikMode?'tik':'tak';
+  }
+  function hide(){bRed.style.opacity=bBlue.style.opacity=lTik.style.opacity=lTak.style.opacity='0';}
+
+  function tick(){
+    const parts=getParts();
+    const phase=stepN%(parts*2);
+    const beatIdx=Math.floor(phase/2);
+    const isShow=phase%2===0;
+    if(isShow){if(beatIdx===0)visited.clear();show(beatIdx%2===0,beatIdx);}
+    else hide();
+    stepN++;
+    timer=setTimeout(tick,getHalfMs());
+  }
+  function stopTimer(){if(timer){clearTimeout(timer);timer=null;}}
+  function startTimer(){
+    stopTimer();stepN=0;visited.clear();
+    buildTl(getParts());tick();
+  }
+  function togglePlay(){
+    playing=!playing;
+    document.getElementById('btn-play').textContent=playing?'⏸ pausar':'▶ play';
+    if(playing)startTimer();else{stopTimer();hide();}
+  }
+  function setBpm(v){bpm=v;document.getElementById('bpm-lbl').textContent=v;if(playing)startTimer();}
+  function clearDivBtns(){['d2','d4','d8','d3','d6'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});}
+  function setDiv(d){divN=d;divMode='bin';clearDivBtns();const ids=['d2','d4','d8'];document.getElementById(ids[d-1]).classList.add('on');if(playing)startTimer();}
+  function setDivT(d){divT=d;divMode='ter';clearDivBtns();document.getElementById('d'+d).classList.add('on');if(playing)startTimer();}
+  startTimer();
+</script>
+</body>
+</html>

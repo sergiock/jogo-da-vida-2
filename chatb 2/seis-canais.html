@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Seis Canais</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0a;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .wrap{width:100%;max-width:600px;position:relative}
+  .channels{display:flex;flex-direction:column;gap:4px}
+  .channel{display:flex;align-items:center;width:100%;position:relative;overflow:visible}
+  .ch-axis{position:absolute;left:0;right:0;top:50%;height:.5px;background:rgba(255,255,255,.12)}
+  .ball-slot{position:absolute;border-radius:50%;transform:translate(-50%,-50%);top:50%;opacity:0;transition:opacity .04s}
+  .ball-slot.red{background:#E24B4A}.ball-slot.blue{background:#378ADD}
+  .ball-slot.ghost-red{background:#E24B4A;opacity:.15!important}.ball-slot.ghost-blue{background:#378ADD;opacity:.15!important}
+  
+  .hud{position:absolute;bottom:12px;right:14px;display:flex;align-items:baseline;gap:8px;z-index:50;pointer-events:none;}
+  .hud-name{font-size:11px;color:rgba(255,255,255,0.28);font-family:monospace;letter-spacing:0.06em;}
+  .hud-sym{font-size:28px;font-weight:500;color:rgba(255,255,255,0.9);font-family:monospace;line-height:1;min-width:32px;text-align:right;}
+
+  .hud{position:absolute;bottom:-32px;right:0}
+  .cb{display:flex;align-items:center;gap:10px;padding:2.2rem 0 0;flex-wrap:wrap}
+  .btn{padding:5px 13px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:12px;background:transparent;color:#ccc;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,.08)}
+  .lbl-c{font-size:12px;color:#888;white-space:nowrap}
+  .sound-btn{padding:5px 13px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:12px;background:transparent;color:#888;cursor:pointer}
+  .sound-btn.on{color:#fff;border-color:rgba(255,255,255,.4)}
+</style>
+</head>
+<body>
+<a style="display:inline-block;margin-bottom:.8rem;font-size:12px;color:#555;text-decoration:none;" href="index.html" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">← índice</a>
+
+<div class="wrap">
+  <div class="channels" id="channels"></div>
+  <div class="hud"><span class="hud-name">seis canais</span><span class="hud-sym" id="hud-sym">1</span></div>
+  <div class="cb">
+    <button class="btn" id="btn-play" onclick="togglePlay()">⏸ pausar</button>
+    <button class="sound-btn" id="snd-btn" onclick="toggleSound()">♪ som off</button>
+    <div style="width:.5px;height:18px;background:rgba(255,255,255,0.15)"></div>
+    <span class="lbl-c">velocidade</span>
+    <input type="range" min="0.2" max="3" step="0.1" value="1" oninput="setSpeed(+this.value)" style="width:90px;accent-color:#fff">
+  </div>
+</div>
+<script>
+  const SYMS=['A','B','C','D','E','F','G','1','2','3','1','2'];
+  const NUM_CH=6,LEFT_PAD=28,RIGHT_PAD=8;
+  let playing=true,speed=1,timers=[],steps=new Array(NUM_CH).fill(0);
+  let audioCtx=null,audioOn=false;
+
+  function chH(ch){return Math.round(36+(140-36)*(ch/(NUM_CH-1)));}
+  function bR(ch,b,nb){const m=chH(ch)*.44,mn=m*.28;return nb===1?m:mn+(m-mn)*(b/(nb-1));}
+
+  function buildChannels(){
+    const wrap=document.getElementById('channels');wrap.innerHTML='';
+    for(let ch=0;ch<NUM_CH;ch++){
+      const h=chH(ch),div=document.createElement('div');
+      div.className='channel';div.id='ch-'+ch;div.style.height=h+'px';
+      const ax=document.createElement('div');ax.className='ch-axis';div.appendChild(ax);
+      for(let b=0;b<ch+1;b++){
+        const s=document.createElement('div');
+        s.className='ball-slot '+(b%2===0?'red':'blue');
+        s.id='ball-'+ch+'-'+b;div.appendChild(s);
+      }
+      wrap.appendChild(div);
+    }
+    posBalls();
+  }
+  function posBalls(){
+    for(let ch=0;ch<NUM_CH;ch++){
+      const div=document.getElementById('ch-'+ch);
+      const w=div.offsetWidth,u=w-LEFT_PAD-RIGHT_PAD,nb=ch+1;
+      for(let b=0;b<nb;b++){
+        const s=document.getElementById('ball-'+ch+'-'+b);
+        const r=bR(ch,b,nb);
+        const xp=nb===1?LEFT_PAD+u/2:LEFT_PAD+(b/(nb-1))*u;
+        s.style.width=(r*2)+'px';s.style.height=(r*2)+'px';s.style.left=xp+'px';
+        const yo=b%2===0?-(chH(ch)*.22):(chH(ch)*.22);
+        s.style.top='calc(50% + '+yo+'px)';
+      }
+    }
+  }
+  window.addEventListener('resize',posBalls);
+
+  function toggleSound(){
+    audioOn=!audioOn;
+    const b=document.getElementById('snd-btn');
+    b.textContent=audioOn?'♪ som on':'♪ som off';b.classList.toggle('on',audioOn);
+    if(audioOn&&!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    if(audioOn&&audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+  }
+  function beep(freq,gain,dur){
+    if(!audioOn||!audioCtx)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);o.type='sine';
+    o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+    g.gain.setValueAtTime(gain,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+    o.start();o.stop(audioCtx.currentTime+dur);
+  }
+
+  function getIvMs(ch){return 1600/speed/(ch+1);}
+
+  function showBeat(ch,b,nb){
+    for(let i=0;i<nb;i++){
+      const s=document.getElementById('ball-'+ch+'-'+i);if(!s)continue;
+      const isTik=i%2===0;
+      if(i===b){s.classList.remove('ghost-red','ghost-blue');s.style.opacity='1';}
+      else if(steps[ch]>i*2){s.classList.add(isTik?'ghost-red':'ghost-blue');s.style.opacity='';}
+      else{s.style.opacity='0';s.classList.remove('ghost-red','ghost-blue');}
+    }
+    const isTik=b%2===0;
+    beep(isTik?1200:400,isTik?.4:.35,isTik?.06:.11);
+    const el=document.getElementById('hud-sym');
+    if(el)el.textContent=SYMS[ch]!==undefined?SYMS[ch]:String(ch+1);
+  }
+  function hideBeat(ch,b){
+    const s=document.getElementById('ball-'+ch+'-'+b);if(!s)return;
+    const isTik=b%2===0;s.style.opacity='';s.classList.add(isTik?'ghost-red':'ghost-blue');
+  }
+  function tickChannel(ch){
+    const nb=ch+1,total=nb*2;
+    const phase=steps[ch]%total;
+    const b=Math.floor(phase/2);
+    const isShow=phase%2===0;
+    if(b===0&&isShow){for(let i=0;i<nb;i++){const s=document.getElementById('ball-'+ch+'-'+i);if(s){s.style.opacity='0';s.classList.remove('ghost-red','ghost-blue');}}}
+    if(isShow)showBeat(ch,b,nb);else hideBeat(ch,b);
+    steps[ch]++;
+    timers[ch]=setTimeout(()=>tickChannel(ch),getIvMs(ch)/2);
+  }
+  function stopAll(){timers.forEach(t=>clearTimeout(t));timers=[];}
+  function startAll(){
+    stopAll();steps=new Array(NUM_CH).fill(0);
+    for(let ch=0;ch<NUM_CH;ch++){
+      for(let b=0;b<ch+1;b++){const s=document.getElementById('ball-'+ch+'-'+b);if(s){s.style.opacity='0';s.classList.remove('ghost-red','ghost-blue');}}
+      timers[ch]=setTimeout(()=>tickChannel(ch),0);
+    }
+  }
+  function togglePlay(){playing=!playing;document.getElementById('btn-play').textContent=playing?'⏸ pausar':'▶ play';if(playing)startAll();else stopAll();}
+  function setSpeed(v){speed=v;if(playing)startAll();}
+  buildChannels();setTimeout(()=>{posBalls();startAll();},80);
+</script>
+</body>
+</html>

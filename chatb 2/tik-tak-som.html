@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tik · Tak · Som</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0a;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .wrap{width:100%;max-width:600px}
+  .stage{width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;border-radius:12px;background:#0a0a0a;cursor:pointer}
+  .ball{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translateX(-50%);opacity:0;z-index:10}
+  .ball.red{background:#E24B4A;top:2%}.ball.blue{background:#378ADD;bottom:2%}
+  .ring{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;z-index:11}
+  .axis{position:absolute;left:0;right:0;top:50%;height:.5px;background:rgba(255,255,255,0.2);z-index:9}
+  .lbl{position:absolute;left:50%;transform:translateX(-50%);font-weight:500;opacity:0;z-index:12;pointer-events:none;letter-spacing:.05em}
+  .lbl.tik{top:4%;color:#fff;font-size:clamp(16px,4vw,32px)}.lbl.tak{bottom:4%;color:#fff;font-size:clamp(16px,4vw,32px)}
+  .hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:rgba(255,255,255,.6);text-align:center;pointer-events:none;z-index:20;line-height:1.7}
+  
+  .hud{position:absolute;bottom:12px;right:14px;display:flex;align-items:baseline;gap:8px;z-index:50;pointer-events:none;}
+  .hud-name{font-size:11px;color:rgba(255,255,255,0.28);font-family:monospace;letter-spacing:0.06em;}
+  .hud-sym{font-size:28px;font-weight:500;color:rgba(255,255,255,0.9);font-family:monospace;line-height:1;min-width:32px;text-align:right;}
+
+  .cb{display:flex;align-items:center;gap:8px;padding:.7rem 0 0;flex-wrap:wrap}
+  .btn{padding:5px 13px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:12px;background:transparent;color:#ccc;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:rgba(255,255,255,0.08)}.btn.on{background:rgba(255,255,255,0.12);font-weight:500;color:#fff}
+  .lbl-c{font-size:12px;color:#888;white-space:nowrap}
+  .gv{font-size:12px;font-weight:500;font-family:monospace;min-width:32px;color:#fff}
+</style>
+</head>
+<body>
+<a style="display:inline-block;margin-bottom:.8rem;font-size:12px;color:#555;text-decoration:none;" href="index.html" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">← índice</a>
+
+<div class="wrap">
+  <div class="stage" id="stage" onclick="initAndToggle()">
+    <div class="axis"></div>
+    <div class="ball red"  id="ball-red"></div>
+    <div class="ball blue" id="ball-blue"></div>
+    <div class="ring"      id="ring"></div>
+    <div class="lbl tik"   id="lbl-tik">tik</div>
+    <div class="lbl tak"   id="lbl-tak">tak</div>
+    <div class="hint"      id="hint">toque para iniciar</div>
+    <div class="hud"><span class="hud-name">tik · tak · som</span><span class="hud-sym" id="hud-sym">●</span></div>
+  </div>
+  <div class="cb">
+    <button class="btn" id="btn-play" onclick="initAndToggle()">▶ play</button>
+    <div style="width:.5px;height:18px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+    <span class="lbl-c">bpm</span>
+    <input type="range" min="20" max="200" step="1" value="60" oninput="setBpm(+this.value)" style="width:90px;accent-color:#fff">
+    <span class="gv" id="bpm-lbl">60</span>
+    <div style="width:.5px;height:18px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+    <span class="lbl-c">÷ binário</span>
+    <button class="btn on" id="div-2"  onclick="setDiv(1)">÷2</button>
+    <button class="btn"    id="div-4"  onclick="setDiv(2)">÷4</button>
+    <button class="btn"    id="div-8"  onclick="setDiv(3)">÷8</button>
+    <div style="width:.5px;height:18px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+    <span class="lbl-c">÷ ternário</span>
+    <button class="btn"    id="div-3"  onclick="setDivT(3)">÷3</button>
+    <button class="btn"    id="div-6"  onclick="setDivT(6)">÷6</button>
+    <button class="btn"    id="div-9"  onclick="setDivT(9)">÷9</button>
+  </div>
+</div>
+<script>
+  let audioCtx=null,playing=false,bpm=60,divN=1,divMode='bin',divT=3;
+  let timer=null,stepN=0,ballSz=0;
+  const stage=document.getElementById('stage');
+  const bRed=document.getElementById('ball-red');
+  const bBlue=document.getElementById('ball-blue');
+  const ring=document.getElementById('ring');
+  const lTik=document.getElementById('lbl-tik');
+  const lTak=document.getElementById('lbl-tak');
+  const hint=document.getElementById('hint');
+  const hudSym=document.getElementById('hud-sym');
+
+  function resize(){
+    ballSz=Math.round(stage.offsetWidth*.72);
+    bRed.style.width=ballSz+'px';bBlue.style.width=ballSz+'px';
+  }
+  window.addEventListener('resize',resize);resize();
+
+  function getCtx(){
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function playTone(freq,gain,dur){
+    const a=getCtx(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);o.type='sine';
+    o.frequency.setValueAtTime(freq,a.currentTime);
+    g.gain.setValueAtTime(gain,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
+    o.start();o.stop(a.currentTime+dur);
+  }
+  function animRing(tikMode){
+    const s=stage.offsetWidth;
+    ring.style.width=ballSz+'px';ring.style.height=ballSz+'px';ring.style.left='50%';
+    ring.style.top=tikMode?(ballSz/2+s*.02)+'px':(s-ballSz/2-s*.02)+'px';
+    ring.style.border='2px solid '+(tikMode?'#E24B4A':'#378ADD');
+    ring.style.opacity='.9';ring.style.transition='none';ring.style.transform='translate(-50%,-50%) scale(1)';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      ring.style.transition='transform .5s ease-out,opacity .5s ease-out';
+      ring.style.transform='translate(-50%,-50%) scale(1.4)';ring.style.opacity='0';
+    }));
+  }
+  function showTik(){
+    playTone(1200,.45,.07);
+    bRed.style.opacity='1';bBlue.style.opacity='0';
+    lTik.style.opacity='1';lTak.style.opacity='0';
+    animRing(true);if(hudSym)hudSym.textContent='tik';
+  }
+  function showTak(){
+    playTone(400,.38,.13);
+    bBlue.style.opacity='1';bRed.style.opacity='0';
+    lTak.style.opacity='1';lTik.style.opacity='0';
+    animRing(false);if(hudSym)hudSym.textContent='tak';
+  }
+  function hideAll(){bRed.style.opacity=bBlue.style.opacity=lTik.style.opacity=lTak.style.opacity='0';}
+
+  function getParts(){ return divMode==='bin'?Math.pow(2,divN):divT; }
+  function getHalfMs(){ return (60000/bpm)/getParts()/2; }
+
+  function tick(){
+    const parts=getParts();
+    const phase=stepN%(parts*2);
+    const beatIdx=Math.floor(phase/2);
+    const isShow=phase%2===0;
+    if(isShow){beatIdx%2===0?showTik():showTak();}
+    else hideAll();
+    stepN++;
+    timer=setTimeout(tick,getHalfMs());
+  }
+  function stopTimer(){if(timer){clearTimeout(timer);timer=null;}}
+  function startTimer(){stopTimer();stepN=0;tick();}
+
+  function initAndToggle(){
+    getCtx();if(audioCtx.state==='suspended')audioCtx.resume();
+    playing=!playing;hint.style.display='none';
+    document.getElementById('btn-play').textContent=playing?'⏸ pausar':'▶ play';
+    if(playing)startTimer();else{stopTimer();hideAll();}
+  }
+  function setBpm(v){bpm=v;document.getElementById('bpm-lbl').textContent=v;if(playing)startTimer();}
+
+  function clearDivBtns(){
+    ['div-2','div-4','div-8','div-3','div-6','div-9'].forEach(id=>{
+      const b=document.getElementById(id);if(b)b.classList.remove('on');
+    });
+  }
+  function setDiv(d){
+    divN=d;divMode='bin';clearDivBtns();
+    const ids=['div-2','div-4','div-8'];
+    const b=document.getElementById(ids[d-1]);if(b)b.classList.add('on');
+    if(playing)startTimer();
+  }
+  function setDivT(d){
+    divT=d;divMode='ter';clearDivBtns();
+    const id='div-'+d;const b=document.getElementById(id);if(b)b.classList.add('on');
+    if(playing)startTimer();
+  }
+</script>
+</body>
+</html>

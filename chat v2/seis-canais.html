@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6 Canais · Bolas Crescentes</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0a;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .wrap{width:100%;max-width:600px}
+  .channels{display:flex;flex-direction:column;gap:4px}
+  .channel{display:flex;align-items:center;width:100%;position:relative;overflow:visible}
+  .ch-axis{position:absolute;left:0;right:0;top:50%;height:0.5px;background:rgba(255,255,255,0.1)}
+  .ch-label{position:absolute;left:0;font-size:11px;font-family:monospace;color:rgba(255,255,255,0.3);transform:translateY(-50%);width:20px;text-align:right}
+  .ball-slot{position:absolute;border-radius:50%;transform:translate(-50%,-50%);top:50%;opacity:0;transition:opacity 0.04s}
+  .ball-slot.red{background:#E24B4A}
+  .ball-slot.blue{background:#378ADD}
+  .ball-slot.ghost-red{background:#E24B4A;opacity:0.15!important}
+  .ball-slot.ghost-blue{background:#378ADD;opacity:0.15!important}
+  .controls{display:flex;align-items:center;gap:12px;padding:0.8rem 0 0;flex-wrap:wrap}
+  .btn{padding:6px 16px;border:0.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:13px;background:transparent;color:#ccc;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,0.08)}
+  .sep{width:0.5px;height:18px;background:rgba(255,255,255,0.15)}
+  .lc{font-size:12px;color:#888}
+  a.back{display:inline-block;margin-bottom:1rem;font-size:12px;color:#555;text-decoration:none}
+  a.back:hover{color:#aaa}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← índice</a>
+<div class="wrap">
+  <div class="channels" id="channels"></div>
+  <div class="controls">
+    <button class="btn" id="btn-play" onclick="togglePlay()">⏸ pausar</button>
+    <div class="sep"></div>
+    <span class="lc">velocidade</span>
+    <input type="range" min="0.2" max="3" step="0.1" value="1" oninput="setSpeed(+this.value)" style="width:90px;accent-color:#fff">
+  </div>
+</div>
+<script>
+  let playing=true,speed=1,timers=[],steps=new Array(6).fill(0);
+  const NUM=6,LEFT_PAD=28,RIGHT_PAD=8;
+  function channelHeight(ch){return Math.round(36+(140-36)*(ch/(NUM-1)));}
+  function ballRadius(ch,beatIdx,numBeats){const maxR=channelHeight(ch)*0.44;const minR=maxR*0.28;if(numBeats===1)return maxR;return minR+(maxR-minR)*(beatIdx/(numBeats-1));}
+  function buildChannels(){
+    const wrap=document.getElementById('channels');wrap.innerHTML='';
+    for(let ch=0;ch<NUM;ch++){
+      const h=channelHeight(ch);const div=document.createElement('div');div.className='channel';div.id='ch-'+ch;div.style.height=h+'px';
+      const axis=document.createElement('div');axis.className='ch-axis';div.appendChild(axis);
+      const lbl=document.createElement('div');lbl.className='ch-label';lbl.style.top='50%';lbl.textContent=(ch+1);div.appendChild(lbl);
+      const numBeats=ch+1;
+      for(let b=0;b<numBeats;b++){const slot=document.createElement('div');const isTik=b%2===0;slot.className='ball-slot '+(isTik?'red':'blue');slot.id='ball-'+ch+'-'+b;div.appendChild(slot);}
+      wrap.appendChild(div);
+    }
+    positionBalls();
+  }
+  function positionBalls(){
+    for(let ch=0;ch<NUM;ch++){
+      const div=document.getElementById('ch-'+ch);if(!div)continue;
+      const w=div.offsetWidth;const usable=w-LEFT_PAD-RIGHT_PAD;const numBeats=ch+1;
+      for(let b=0;b<numBeats;b++){
+        const slot=document.getElementById('ball-'+ch+'-'+b);if(!slot)continue;
+        const r=ballRadius(ch,b,numBeats);
+        const xPct=numBeats===1?LEFT_PAD+usable/2:LEFT_PAD+(b/(numBeats-1))*usable;
+        slot.style.width=(r*2)+'px';slot.style.height=(r*2)+'px';slot.style.left=xPct+'px';
+        const isTik=b%2===0;const yOff=isTik?-(channelHeight(ch)*0.22):(channelHeight(ch)*0.22);
+        slot.style.top='calc(50% + '+yOff+'px)';
+      }
+    }
+  }
+  window.addEventListener('resize',positionBalls);
+  function getIntervalMs(ch){return(1600/speed)/(ch+1);}
+  function showBeat(ch,beatIdx){
+    const numBeats=ch+1;
+    for(let b=0;b<numBeats;b++){
+      const slot=document.getElementById('ball-'+ch+'-'+b);if(!slot)continue;
+      const isTik=b%2===0;
+      if(b===beatIdx){slot.classList.remove('ghost-red','ghost-blue');slot.style.opacity='1';}
+      else if(steps[ch]>b*2){slot.classList.add(isTik?'ghost-red':'ghost-blue');slot.style.opacity='';}
+      else{slot.style.opacity='0';slot.classList.remove('ghost-red','ghost-blue');}
+    }
+  }
+  function hideBeat(ch,beatIdx){const slot=document.getElementById('ball-'+ch+'-'+beatIdx);if(!slot)return;const isTik=beatIdx%2===0;slot.style.opacity='';slot.classList.add(isTik?'ghost-red':'ghost-blue');}
+  function tickChannel(ch){
+    const numBeats=ch+1;const totalPhases=numBeats*2;const phase=steps[ch]%totalPhases;const beatIdx=Math.floor(phase/2);const isShow=phase%2===0;
+    if(beatIdx===0&&isShow){for(let b=0;b<numBeats;b++){const s=document.getElementById('ball-'+ch+'-'+b);if(s){s.style.opacity='0';s.classList.remove('ghost-red','ghost-blue');}}}
+    if(isShow)showBeat(ch,beatIdx);else hideBeat(ch,beatIdx);
+    steps[ch]++;timers[ch]=setTimeout(()=>tickChannel(ch),getIntervalMs(ch)/2);
+  }
+  function stopAll(){timers.forEach(t=>clearTimeout(t));timers=[];}
+  function startAll(){
+    stopAll();steps=new Array(NUM).fill(0);
+    for(let ch=0;ch<NUM;ch++){for(let b=0;b<ch+1;b++){const s=document.getElementById('ball-'+ch+'-'+b);if(s){s.style.opacity='0';s.classList.remove('ghost-red','ghost-blue');}}timers[ch]=setTimeout(()=>tickChannel(ch),0);}
+  }
+  function togglePlay(){playing=!playing;document.getElementById('btn-play').textContent=playing?'⏸ pausar':'▶ play';if(playing)startAll();else stopAll();}
+  function setSpeed(v){speed=v;if(playing)startAll();}
+  buildChannels();setTimeout(()=>{positionBalls();startAll();},80);
+</script>
+</body>
+</html>

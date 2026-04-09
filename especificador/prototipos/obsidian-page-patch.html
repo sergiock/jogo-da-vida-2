@@ -1,0 +1,78 @@
+<!-- obsidian-page-patch.html -->
+<!-- 1. Adicionar ao <nav> depois do item Matriz: -->
+<!--
+      <a onclick="navegar('obsidian', this)">
+        <span class="nav-icon">⊙</span> Obsidian
+      </a>
+-->
+
+<!-- 2. Adicionar ao <style> antes de </style>: -->
+<!--
+  .obs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .obs-btn {
+    display: flex; flex-direction: column; gap: 6px; padding: 20px 22px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    cursor: pointer; transition: all 0.15s; text-align: left; font-family: inherit;
+  }
+  .obs-btn:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .obs-btn-icon  { font-size: 1.4rem; }
+  .obs-btn-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2); }
+  .obs-btn-desc  { font-size: 0.85rem; color: var(--text3); font-style: italic; }
+  .obs-search-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .obs-search-row input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--text); outline: none;
+  }
+  .obs-resultado {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 20px 24px; margin-top: 16px; font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    color: var(--text2); white-space: pre-wrap; max-height: 320px; overflow-y: auto; line-height: 1.6; display: none;
+  }
+  .obs-resultado.visivel { display: block; }
+  .obs-status { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text3); margin-top: 10px; min-height: 20px; }
+  .obs-status.ok   { color: var(--accent); }
+  .obs-status.erro { color: var(--fogo); }
+-->
+
+<!-- 3. Adicionar ao <main> antes de </main>: -->
+<!--
+  <div class="page" id="page-obsidian">
+    <div class="page-header">
+      <div class="data">Utilitários</div>
+      <h2>Obsidian</h2>
+      <p>Acesso direto ao vault via CLI.</p>
+    </div>
+    <div class="obs-grid">
+      <button class="obs-btn" onclick="obsCmd('files')">
+        <span class="obs-btn-icon">≡</span>
+        <span class="obs-btn-label">Listar arquivos</span>
+        <span class="obs-btn-desc">obsidian files</span>
+      </button>
+      <button class="obs-btn" onclick="obsCmd('daily')">
+        <span class="obs-btn-icon">✦</span>
+        <span class="obs-btn-label">Nota diária</span>
+        <span class="obs-btn-desc">obsidian daily</span>
+      </button>
+      <button class="obs-btn" onclick="obsCmd('status')">
+        <span class="obs-btn-icon">◎</span>
+        <span class="obs-btn-label">Status do vault</span>
+        <span class="obs-btn-desc">obsidian status</span>
+      </button>
+      <button class="obs-btn" onclick="obsBuscarSessoes()">
+        <span class="obs-btn-icon">⊛</span>
+        <span class="obs-btn-label">Buscar sessões</span>
+        <span class="obs-btn-desc">search: animalgame</span>
+      </button>
+    </div>
+    <div class="sep">Busca livre</div>
+    <div class="obs-search-row">
+      <input id="obs-q" type="text" placeholder="termo para buscar no vault..."
+        onkeydown="if(event.key==='Enter') obsSearch()">
+      <button class="btn btn-primary" onclick="obsSearch()">Buscar</button>
+    </div>
+    <div id="obs-status" class="obs-status"></div>
+    <div id="obs-resultado" class="obs-resultado"></div>
+  </div>
+-->
+
+<!-- 4. Adicionar ao <script> antes de </script>: ver obsidian-patch.js -->

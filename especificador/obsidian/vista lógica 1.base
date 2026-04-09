@@ -1,0 +1,8 @@
+views:
+  - type: cards
+    name: Table
+    order:
+      - file.tags
+      - jogo_ativo
+      - servico
+      - file.name

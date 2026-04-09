@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Obsidian app config
+.obsidian/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

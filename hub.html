@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo da Vida · Hub</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0e0e0c;
+  --bg2:#161614;
+  --bg3:#1e1e1b;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --text:#c8c6be;
+  --text2:#6e6d67;
+  --text3:#3a3a37;
+  --accent:#e8e2d0;
+  --fogo:#c05a2a;
+  --fogo-dim:rgba(192,90,42,0.15);
+  --terra:#7a6a4a;
+  --terra-dim:rgba(122,106,74,0.15);
+  --agua:#3a7bad;
+  --agua-dim:rgba(58,123,173,0.15);
+  --ar:#8a88a8;
+  --ar-dim:rgba(138,136,168,0.15);
+  --eter:#6a9a7a;
+  --eter-dim:rgba(106,154,122,0.15);
+  --pronto:#2a4a2a;
+  --pronto-text:#7ac87a;
+  --pendente:#3a3a1a;
+  --pendente-text:#a8a060;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:0;
+}
+
+/* ── HEADER ── */
+header{
+  border-bottom:1px solid var(--border);
+  padding:2rem 2.5rem 1.6rem;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:1rem;
+}
+.header-left h1{
+  font-family:'DM Mono',monospace;
+  font-size:13px;
+  font-weight:400;
+  color:var(--text2);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:.3rem;
+}
+.header-left .titulo{
+  font-size:28px;
+  font-weight:300;
+  color:var(--accent);
+  letter-spacing:-.02em;
+  line-height:1;
+}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:1.2rem;
+  flex-shrink:0;
+}
+.fase-badge{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:4px 12px;
+  border-radius:3px;
+  border:1px solid;
+}
+.fase-fogo{ color:var(--fogo); border-color:var(--fogo); background:var(--fogo-dim);}
+.fase-terra{ color:var(--terra); border-color:var(--terra); background:var(--terra-dim);}
+.fase-agua{ color:var(--agua); border-color:var(--agua); background:var(--agua-dim);}
+.fase-ar{ color:var(--ar); border-color:var(--ar); background:var(--ar-dim);}
+.jogo-label{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--text2);
+  letter-spacing:.06em;
+}
+.status-dot{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--fogo);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── LAYOUT ── */
+.main{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  min-height:calc(100vh - 89px);
+}
+
+/* ── SIDEBAR ── */
+nav{
+  border-right:1px solid var(--border);
+  padding:1.5rem 0;
+  position:sticky;
+  top:0;
+  height:calc(100vh - 89px);
+  overflow-y:auto;
+}
+.nav-section{
+  margin-bottom:.2rem;
+}
+.nav-label{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--text3);
+  padding:.5rem 1.4rem .3rem;
+}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  padding:.42rem 1.4rem;
+  font-size:13px;
+  color:var(--text2);
+  cursor:pointer;
+  transition:all .12s;
+  text-decoration:none;
+  border-left:2px solid transparent;
+}
+.nav-item:hover{color:var(--accent);background:rgba(255,255,255,0.03);}
+.nav-item.active{color:var(--accent);border-left-color:var(--fogo);background:rgba(255,255,255,0.04);}
+.nav-item .dot{
+  width:5px;height:5px;border-radius:50%;flex-shrink:0;
+  background:var(--text3);
+}
+.nav-item.pronto .dot{background:var(--pronto-text);}
+.nav-item.pendente .dot{background:var(--pendente-text);}
+
+/* ── CONTENT ── */
+.content{
+  padding:2rem 2.5rem;
+  max-width:980px;
+}
+
+/* ── SECTION HEADER ── */
+.section-head{
+  display:flex;
+  align-items:baseline;
+  gap:1rem;
+  margin-bottom:1.4rem;
+  padding-bottom:.8rem;
+  border-bottom:1px solid var(--border);
+}
+.section-head h2{
+  font-size:18px;
+  font-weight:400;
+  color:var(--accent);
+  letter-spacing:-.01em;
+}
+.section-head .meta{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--text3);
+  letter-spacing:.06em;
+}
+
+/* ── CARDS GRID ── */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:10px;
+  margin-bottom:2.5rem;
+}
+.card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:1.1rem 1.2rem;
+  text-decoration:none;
+  color:inherit;
+  display:flex;
+  flex-direction:column;
+  gap:.6rem;
+  transition:border-color .15s,background .15s;
+  cursor:pointer;
+}
+.card:hover{
+  border-color:var(--border2);
+  background:var(--bg3);
+}
+.card.pendente{
+  opacity:.55;
+  cursor:default;
+}
+.card.pendente:hover{
+  border-color:var(--border);
+  background:var(--bg2);
+}
+.card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.card-icon{
+  font-family:'DM Mono',monospace;
+  font-size:18px;
+  color:var(--text2);
+  line-height:1;
+}
+.card-status{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.08em;
+  padding:2px 8px;
+  border-radius:2px;
+}
+.card-status.pronto{background:var(--pronto);color:var(--pronto-text);}
+.card-status.pendente{background:var(--pendente);color:var(--pendente-text);}
+.card-title{
+  font-size:14px;
+  font-weight:500;
+  color:var(--accent);
+  line-height:1.3;
+}
+.card-desc{
+  font-size:12px;
+  color:var(--text2);
+  line-height:1.6;
+  flex:1;
+}
+.card-footer{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:.2rem;
+}
+.tag{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.04em;
+  padding:2px 8px;
+  border-radius:2px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  color:var(--text2);
+}
+.tag.ritmo{border-color:rgba(192,90,42,.3);color:#c07050;}
+.tag.som{border-color:rgba(192,160,42,.3);color:#b09050;}
+.tag.faixas{border-color:rgba(58,123,173,.3);color:#6090b0;}
+.tag.visual{border-color:rgba(138,90,200,.3);color:#9080b0;}
+.tag.grade{border-color:rgba(80,160,80,.3);color:#60a060;}
+.tag.tempo{border-color:rgba(80,140,200,.3);color:#6090c0;}
+.tag.instrumento{border-color:rgba(200,160,80,.3);color:#c0a060;}
+.tag.sistema{border-color:rgba(160,80,80,.3);color:#b06060;}
+.tag.dados{border-color:rgba(80,160,140,.3);color:#50a090;}
+
+/* ── ROADMAP ── */
+.roadmap{
+  margin-bottom:2.5rem;
+}
+.roadmap-item{
+  display:flex;
+  gap:1rem;
+  padding:.9rem 0;
+  border-bottom:1px solid var(--border);
+  align-items:flex-start;
+}
+.roadmap-item:last-child{border-bottom:none;}
+.rm-marker{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--text3);
+  min-width:2rem;
+  padding-top:2px;
+  letter-spacing:.06em;
+}
+.rm-marker.next{color:var(--fogo);}
+.rm-body{flex:1;}
+.rm-title{
+  font-size:13px;
+  font-weight:500;
+  color:var(--accent);
+  margin-bottom:.25rem;
+}
+.rm-desc{
+  font-size:12px;
+  color:var(--text2);
+  line-height:1.6;
+}
+.rm-status{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.06em;
+  padding:2px 8px;
+  border-radius:2px;
+  align-self:flex-start;
+  flex-shrink:0;
+}
+.rm-status.proximo{background:var(--fogo-dim);color:var(--fogo);border:1px solid rgba(192,90,42,.3);}
+.rm-status.pendente{background:var(--pendente);color:var(--pendente-text);}
+
+/* ── BACKLOG ── */
+.backlog-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:2.5rem;
+}
+.backlog-item{
+  display:flex;
+  align-items:flex-start;
+  gap:.8rem;
+  padding:.7rem 1rem;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-size:13px;
+}
+.backlog-item.next{
+  border-color:rgba(192,90,42,.25);
+  background:var(--fogo-dim);
+}
+.bl-num{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--text3);
+  min-width:1.4rem;
+  padding-top:1px;
+}
+.bl-num.next{color:var(--fogo);}
+.bl-body{flex:1;}
+.bl-title{color:var(--accent);font-weight:500;margin-bottom:.15rem;}
+.bl-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+
+/* ── DIVISOR ── */
+.divider{
+  height:1px;
+  background:var(--border);
+  margin:2rem 0;
+}
+
+/* ── CANAIS ── */
+.canais-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:8px;
+  margin-bottom:2.5rem;
+}
+.canal{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:.7rem 1rem;
+  display:flex;
+  gap:.8rem;
+  align-items:flex-start;
+}
+.canal.oculto{border-style:dashed;opacity:.7;}
+.canal-id{
+  font-family:'DM Mono',monospace;
+  font-size:16px;
+  font-weight:500;
+  color:var(--text3);
+  min-width:1.4rem;
+  line-height:1.2;
+}
+.canal-body{}
+.canal-nome{font-size:12px;font-weight:500;color:var(--accent);margin-bottom:.15rem;}
+.canal-desc{font-size:11px;color:var(--text2);line-height:1.5;}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--border);
+  padding:1rem 2.5rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--text3);
+  letter-spacing:.06em;
+}
+
+/* ── SCROLL ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>jogo da vida · hub central</h1>
+    <div class="titulo">instrumento</div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span class="jogo-label">01-animalgame · ciclo 4</span>
+    <span class="fase-badge fase-fogo">fogo</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">apps</div>
+      <a class="nav-item pronto active" href="#apps" onclick="show('apps',this)">
+        <span class="dot"></span>especificador + cores
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">chat b · tempo</div>
+      <a class="nav-item pronto" href="#chatb" onclick="show('chatb',this)">
+        <span class="dot"></span>artefatos · 8 prontos
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">instrumento</div>
+      <a class="nav-item pendente" href="#instrumento" onclick="show('instrumento',this)">
+        <span class="dot"></span>artefatos · pendentes
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">sistema</div>
+      <a class="nav-item pronto" href="#canais" onclick="show('canais',this)">
+        <span class="dot"></span>14 canais
+      </a>
+      <a class="nav-item pronto" href="#roadmap" onclick="show('roadmap',this)">
+        <span class="dot"></span>roadmap
+      </a>
+      <a class="nav-item pronto" href="#backlog" onclick="show('backlog',this)">
+        <span class="dot"></span>backlog
+      </a>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- SEÇÃO: APPS -->
+    <div id="sec-apps">
+      <div class="section-head">
+        <h2>apps · servidor único :8080</h2>
+        <span class="meta">especificador + cores · unificados</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="http://localhost:8080/" target="_blank">
+          <div class="card-top">
+            <span class="card-icon">◎</span>
+            <span class="card-status pronto">pronto</span>
+          </div>
+          <div class="card-title">especificador</div>
+          <div class="card-desc">App principal desktop. Registros diários, consultas Claude/Gemini, temas, matriz de objetivos, notas cronológicas.</div>
+          <div class="card-footer">
+            <span class="tag dados">registros</span>
+            <span class="tag dados">consultas</span>
+            <span class="tag sistema">:8080/</span>
+          </div>
+        </a>
+        <a class="card" href="http://localhost:8080/cores" target="_blank">
+          <div class="card-top">
+            <span class="card-icon">◉</span>
+            <span class="card-status pronto">pronto</span>
+          </div>
+          <div class="card-title">cores</div>
+          <div class="card-desc">App mobile. Registro de eventos externos com tipo, impacto, ameaça, personagens. Padrões e conexões na base.</div>
+          <div class="card-footer">
+            <span class="tag sistema">eventos</span>
+            <span class="tag sistema">:8080/cores</span>
+          </div>
+        </a>
+        <a class="card" href="http://localhost:8080/chatb" target="_blank">
+          <div class="card-top">
+            <span class="card-icon">▤</span>
+            <span class="card-status pronto">pronto</span>
+          </div>
+          <div class="card-title">chat b · galeria</div>
+          <div class="card-desc">Hub do canal B — tempo e espaço. Galeria com busca e filtros dos artefatos de ritmo e divisão.</div>
+          <div class="card-footer">
+            <span class="tag tempo">ritmo</span>
+            <span class="tag sistema">:8080/chatb</span>
+          </div>
+        </a>
+        <div class="card">
+          <div class="card-top">
+            <span class="card-icon">⬡</span>
+            <span class="card-status pronto">pronto</span>
+          </div>
+          <div class="card-title">servidor único</div>
+          <div class="card-desc">servidor_unico.py · porta 8080 · substitui :8181 e :8282 · 4 rotas de integração novas · salva sessões de desenvolvimento.</div>
+          <div class="card-footer">
+            <span class="tag sistema">python</span>
+            <span class="tag dados">/api/integracao/*</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- integração -->
+      <div class="section-head" style="margin-top:1rem">
+        <h2>rotas de integração · novas</h2>
+        <span class="meta">backlog 1–4 implementados</span>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="card-top"><span class="card-icon">→</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">registros → cores</div>
+          <div class="card-desc">GET /api/integracao/contexto-registro · registros recentes aparecem ao criar evento no Cores.</div>
+          <div class="card-footer"><span class="tag dados">backlog 1</span></div>
+        </div>
+        <div class="card">
+          <div class="card-top"><span class="card-icon">←</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">eventos → especificador</div>
+          <div class="card-desc">GET /api/integracao/sugestoes-registro · eventos do dia alimentam sugestões de reflexão.</div>
+          <div class="card-footer"><span class="tag dados">backlog 2</span></div>
+        </div>
+        <div class="card">
+          <div class="card-top"><span class="card-icon">◈</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">temas → cores</div>
+          <div class="card-desc">GET /api/integracao/temas-evento · temas indexados informam classificação de eventos.</div>
+          <div class="card-footer"><span class="tag dados">backlog 3</span></div>
+        </div>
+        <div class="card">
+          <div class="card-top"><span class="card-icon">◇</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">matriz → cores</div>
+          <div class="card-desc">GET /api/integracao/matriz-cores · painel de objetivos visível durante registro de situações.</div>
+          <div class="card-footer"><span class="tag dados">backlog 4</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CHAT B -->
+    <div id="sec-chatb" style="display:none">
+      <div class="section-head">
+        <h2>chat b · tempo e espaço</h2>
+        <span class="meta">8 artefatos prontos · tik · tak</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="chatb/bordao.html" target="_blank">
+          <div class="card-top"><span class="card-icon">◈</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">bordão</div>
+          <div class="card-desc">A nota que sustenta. Faixas como campos de endereçamento. Conceito âncora — conexão com o jogo da vida.</div>
+          <div class="card-footer"><span class="tag instrumento">âncora</span><span class="tag visual">visual</span></div>
+        </a>
+        <a class="card" href="chatb/orquestra.html" target="_blank">
+          <div class="card-top"><span class="card-icon">◉</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">orquestra</div>
+          <div class="card-desc">Todos os instrumentos simultaneamente. Controle global de BPM, divisão, play/pausa. Envio de mensagens para endereços.</div>
+          <div class="card-footer"><span class="tag instrumento">controle</span><span class="tag tempo">ritmo</span></div>
+        </a>
+        <a class="card" href="chatb/tik-tak-som.html" target="_blank">
+          <div class="card-top"><span class="card-icon">◎</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">tik · tak · som</div>
+          <div class="card-desc">Bola tela inteira, acima e abaixo. Tom agudo/grave. Divisões binárias ÷2÷4÷8 e ternárias ÷3÷6÷9.</div>
+          <div class="card-footer"><span class="tag ritmo">ritmo</span><span class="tag som">som</span></div>
+        </a>
+        <a class="card" href="chatb/compasso-cima-baixo.html" target="_blank">
+          <div class="card-top"><span class="card-icon">⬤</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">compasso cima · baixo</div>
+          <div class="card-desc">Bola vermelha acima, azul abaixo. Linha do tempo com rastro. Divisões binárias e ternárias.</div>
+          <div class="card-footer"><span class="tag ritmo">ritmo</span><span class="tag som">som</span></div>
+        </a>
+        <a class="card" href="chatb/seis-canais.html" target="_blank">
+          <div class="card-top"><span class="card-icon">▬</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">seis canais crescentes</div>
+          <div class="card-desc">6 linhas simultâneas com 1…6 bolas crescentes alternando tik e tak em ritmos independentes.</div>
+          <div class="card-footer"><span class="tag ritmo">ritmo</span><span class="tag visual">visual</span></div>
+        </a>
+        <a class="card" href="chatb/faixas-numeradas-v2.html" target="_blank">
+          <div class="card-top"><span class="card-icon">▣</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">faixas numeradas · pulso</div>
+          <div class="card-desc">Faixas com seta de direção + símbolo + número. O número pulsa na faixa ativa — cresce e encolhe com o ritmo.</div>
+          <div class="card-footer"><span class="tag faixas">faixas</span><span class="tag visual">visual</span></div>
+        </a>
+        <a class="card" href="chatb/faixas-tik-tak-som.html" target="_blank">
+          <div class="card-top"><span class="card-icon">◈</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">faixas + tik·tak + som</div>
+          <div class="card-desc">Pano de fundo pulsante com setas de direção, bolas tik·tak e som sincronizados. Versão completa do canal B.</div>
+          <div class="card-footer"><span class="tag faixas">faixas</span><span class="tag ritmo">ritmo</span><span class="tag som">som</span><span class="tag grade">grade</span></div>
+        </a>
+        <a class="card" href="chatb/faixas-numeradas-v1.html" target="_blank">
+          <div class="card-top"><span class="card-icon">▤</span><span class="card-status pronto">pronto</span></div>
+          <div class="card-title">faixas numeradas v1</div>
+          <div class="card-desc">Faixas H/V com 3 modos: linear, espelho, alternância. Vermelho · branco · azul.</div>
+          <div class="card-footer"><span class="tag faixas">faixas</span><span class="tag visual">visual</span></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: INSTRUMENTO (pendente) -->
+    <div id="sec-instrumento" style="display:none">
+      <div class="section-head">
+        <h2>instrumento · artefatos</h2>
+        <span class="meta">8 prontos em outros chats · aguardando arquivos</span>
+      </div>
+      <div class="grid">
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">⬡</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">autômato · jogo da vida</div>
+          <div class="card-desc">12 cordas em anel circular. Regra editável na corda 6. Estado zero → diferença emerge pela regra. Histórico visual.</div>
+          <div class="card-footer"><span class="tag sistema">jogo_da_vida_automato.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">◫</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">grade de regras · gesto</div>
+          <div class="card-desc">Grade 12×12 interativa. Desenho com mouse → detecção de padrão → expressão matemática. Aplica no autômato.</div>
+          <div class="card-footer"><span class="tag sistema">grade_regra_gesto.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">◧</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">dois planos</div>
+          <div class="card-desc">Plano 1: matriz — histórico do autômato como partitura. Plano 2: objetos — símbolos, texto, IA pendurados nas cordas.</div>
+          <div class="card-footer"><span class="tag sistema">dois_planos.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">◭</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">instrumento · bordão</div>
+          <div class="card-desc">Grade + compasso + chat sempre visíveis. 4 modos: canal único, coral, bordão, canal B. Eco acumulado por corda.</div>
+          <div class="card-footer"><span class="tag instrumento">instrumento_final_bordao.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">▦</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">12 canais</div>
+          <div class="card-desc">Grade 6×2 com A B C D E F G 1 2 3 4 5. Cada canal tem memória independente, símbolos e IA com personalidade.</div>
+          <div class="card-footer"><span class="tag instrumento">12_canais_paineis.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">◌</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">compasso sonoro</div>
+          <div class="card-desc">12 caixas empilhadas, bola animada autônoma por corda. Web Audio API. Gestos em loop: bordão, tríade, acorde.</div>
+          <div class="card-footer"><span class="tag som">compasso_sonoro.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">⊟</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">partitura 12×12</div>
+          <div class="card-desc">Grade canal × pulso editável. Base persistente + variação por pulso. 3 modos: conteúdo, símbolos, misto.</div>
+          <div class="card-footer"><span class="tag sistema">partitura_12x12.html</span></div>
+        </div>
+        <div class="card pendente">
+          <div class="card-top"><span class="card-icon">◐</span><span class="card-status pendente">pendente</span></div>
+          <div class="card-title">bootstrap</div>
+          <div class="card-desc">Estado completo exportado: [v0..v11] + regra + compasso. Cola aqui → instrumento acorda onde parou.</div>
+          <div class="card-footer"><span class="tag sistema">bootstrap_zero.html</span></div>
+        </div>
+      </div>
+      <div style="margin-top:1rem;padding:.8rem 1rem;background:var(--fogo-dim);border:1px solid rgba(192,90,42,.2);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.6;">
+        Para ativar: envie os HTMLs dos artefatos neste chat e o hub atualiza automaticamente os links.
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CANAIS -->
+    <div id="sec-canais" style="display:none">
+      <div class="section-head">
+        <h2>14 canais · identidades</h2>
+        <span class="meta">12 aparentes · 1 oculto · 1 supervisor</span>
+      </div>
+      <div class="canais-grid">
+        <div class="canal"><div class="canal-id">A</div><div class="canal-body"><div class="canal-nome">dedão esquerdo</div><div class="canal-desc">base · mônada · sinergia · para quem?</div></div></div>
+        <div class="canal"><div class="canal-id">B</div><div class="canal-body"><div class="canal-nome">2º esquerdo</div><div class="canal-desc">tempo · espaço · tik/tak · divisão</div></div></div>
+        <div class="canal"><div class="canal-id">C</div><div class="canal-body"><div class="canal-nome">3º esquerdo</div><div class="canal-desc">vértice do triângulo · face do tetraedro</div></div></div>
+        <div class="canal"><div class="canal-id">D</div><div class="canal-body"><div class="canal-nome">4º esquerdo</div><div class="canal-desc">estabilidade sistêmica encaixotada</div></div></div>
+        <div class="canal"><div class="canal-id">E</div><div class="canal-body"><div class="canal-nome">5º esquerdo</div><div class="canal-desc">o mínimo · o detalhe · o sussurro</div></div></div>
+        <div class="canal"><div class="canal-id">F</div><div class="canal-body"><div class="canal-nome">dedão direito</div><div class="canal-desc">base · espelho · outra tônica</div></div></div>
+        <div class="canal"><div class="canal-id">G</div><div class="canal-body"><div class="canal-nome">2º direito</div><div class="canal-desc">dominante · tensão · segundo gesto</div></div></div>
+        <div class="canal"><div class="canal-id">1</div><div class="canal-body"><div class="canal-nome">3º direito</div><div class="canal-desc">contagem ímpar · primeiro tempo</div></div></div>
+        <div class="canal"><div class="canal-id">2</div><div class="canal-body"><div class="canal-nome">4º direito</div><div class="canal-desc">contagem ímpar · segundo tempo</div></div></div>
+        <div class="canal"><div class="canal-id">3</div><div class="canal-body"><div class="canal-nome">5º direito</div><div class="canal-desc">contagem ímpar · terceiro tempo · retorno</div></div></div>
+        <div class="canal oculto"><div class="canal-id">6</div><div class="canal-body"><div class="canal-nome">oculto · ponto de inversão</div><div class="canal-desc">dobra · espelho · o meio · {1…6}→{6…1}</div></div></div>
+        <div class="canal"><div class="canal-id">14</div><div class="canal-body"><div class="canal-nome">supervisor</div><div class="canal-desc">interface móvel · ambiente remoto · celular</div></div></div>
+      </div>
+      <div style="padding:.8rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:.04em;line-height:2;">
+        protocolo · A → B → C → D → E → F → G → 1 → 2 → 3 → 6 → A
+      </div>
+    </div>
+
+    <!-- SEÇÃO: ROADMAP -->
+    <div id="sec-roadmap" style="display:none">
+      <div class="section-head">
+        <h2>roadmap · ordem de execução</h2>
+        <span class="meta">2026-03-22 · sessão de integração</span>
+      </div>
+      <div class="roadmap">
+        <div class="roadmap-item">
+          <span class="rm-marker next">R1</span>
+          <div class="rm-body">
+            <div class="rm-title">servidor único · backlog 5</div>
+            <div class="rm-desc">Unificar :8181 e :8282 numa porta. Base compartilhada. Desbloqueia todos os outros itens.</div>
+          </div>
+          <span class="rm-status proximo">feito ✓</span>
+        </div>
+        <div class="roadmap-item">
+          <span class="rm-marker next">R2</span>
+          <div class="rm-body">
+            <div class="rm-title">ponte artefatos ↔ servidor · backlog 1+2</div>
+            <div class="rm-desc">GET /api/status ao abrir instrumento. POST /api/registro/salvar ao fechar compasso. Desvios → /api/evento/salvar.</div>
+          </div>
+          <span class="rm-status proximo">próximo</span>
+        </div>
+        <div class="roadmap-item">
+          <span class="rm-marker">R3</span>
+          <div class="rm-body">
+            <div class="rm-title">cruzamento especificador ↔ cores · backlog 3+4</div>
+            <div class="rm-desc">Registros alimentam sugestões. Eventos alimentam reflexões. Matriz visível no Cores.</div>
+          </div>
+          <span class="rm-status pendente">pendente</span>
+        </div>
+        <div class="roadmap-item">
+          <span class="rm-marker">R4</span>
+          <div class="rm-body">
+            <div class="rm-title">sincronização automática · backlog 6</div>
+            <div class="rm-desc">Qualquer mudança no Obsidian reflete nos dois sites em tempo real. Websocket ou polling.</div>
+          </div>
+          <span class="rm-status pendente">pendente</span>
+        </div>
+        <div class="roadmap-item">
+          <span class="rm-marker">R5</span>
+          <div class="rm-body">
+            <div class="rm-title">widget integrador · instrumento completo</div>
+            <div class="rm-desc">Tela única navegando entre os 8 blocos do instrumento em três camadas: sistema · código · observador.</div>
+          </div>
+          <span class="rm-status pendente">pendente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: BACKLOG -->
+    <div id="sec-backlog" style="display:none">
+      <div class="section-head">
+        <h2>backlog · integração</h2>
+        <span class="meta">jogo da vida v.next</span>
+      </div>
+      <div class="backlog-list">
+        <div class="backlog-item">
+          <span class="bl-num">1</span>
+          <div class="bl-body">
+            <div class="bl-title">registros → cores</div>
+            <div class="bl-desc">Contexto do mundo interno aparece ao registrar um evento externo.</div>
+          </div>
+        </div>
+        <div class="backlog-item">
+          <span class="bl-num">2</span>
+          <div class="bl-body">
+            <div class="bl-title">eventos → especificador</div>
+            <div class="bl-desc">Eventos do dia alimentam sugestões de registro e reflexão.</div>
+          </div>
+        </div>
+        <div class="backlog-item">
+          <span class="bl-num">3</span>
+          <div class="bl-body">
+            <div class="bl-title">temas → cores</div>
+            <div class="bl-desc">Classificação de eventos informada pelo conteúdo dos temas indexados.</div>
+          </div>
+        </div>
+        <div class="backlog-item">
+          <span class="bl-num">4</span>
+          <div class="bl-body">
+            <div class="bl-title">matriz → cores</div>
+            <div class="bl-desc">Painel de objetivos visível durante o registro de situações.</div>
+          </div>
+        </div>
+        <div class="backlog-item next">
+          <span class="bl-num next">5</span>
+          <div class="bl-body">
+            <div class="bl-title">servidor único ← feito ✓</div>
+            <div class="bl-desc">Especificador + Cores numa porta só · base compartilhada unificada · :8080.</div>
+          </div>
+        </div>
+        <div class="backlog-item">
+          <span class="bl-num">6</span>
+          <div class="bl-body">
+            <div class="bl-title">sincronização automática</div>
+            <div class="bl-desc">Qualquer alteração no Obsidian reflete nos dois sites em tempo real.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<footer>
+  <span>jogo da vida · hub · 2026-03-22</span>
+  <span>claude-sonnet-4-6 · fase fogo · 01-animalgame</span>
+</footer>
+
+<script>
+function show(id, el) {
+  // esconde tudo
+  document.querySelectorAll('[id^="sec-"]').forEach(s => s.style.display = 'none');
+  // mostra seção
+  const sec = document.getElementById('sec-' + id);
+  if (sec) sec.style.display = 'block';
+  // atualiza nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  // scroll top
+  document.querySelector('.content').scrollTop = 0;
+}
+
+// inicia na seção apps
+document.addEventListener('DOMContentLoaded', () => {
+  show('apps', document.querySelector('.nav-item.active'));
+});
+
+// tenta carregar status do servidor
+async function carregarStatus() {
+  try {
+    const r = await fetch('/api/status');
+    if (!r.ok) return;
+    const s = await r.json();
+    if (s.fase) {
+      const badge = document.querySelector('.fase-badge');
+      badge.textContent = s.fase;
+      badge.className = 'fase-badge fase-' + s.fase.toLowerCase();
+    }
+    if (s.jogo) {
+      document.querySelector('.jogo-label').textContent = s.jogo + ' · ativo';
+    }
+  } catch(e) {
+    // servidor offline — continua com valores padrão
+  }
+}
+carregarStatus();
+</script>
+</body>
+</html>

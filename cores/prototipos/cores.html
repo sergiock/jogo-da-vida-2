@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Cores</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0C0C0E;
+    --bg2:     #141418;
+    --surface: #1C1C22;
+    --border:  #2A2A35;
+    --text:    #F0EEF8;
+    --text2:   #9B99B0;
+    --text3:   #5A5870;
+
+    --fogo:    #FF4D2E;
+    --ar:      #4D9EFF;
+    --agua:    #2EDFB0;
+    --terra:   #E8C840;
+    --eter:    #B06EFF;
+
+    --tipo:    #FF7A5C;
+    --impacto: #5CB8FF;
+    --ameaca:  #FF5C8A;
+    --pessoa:  #5CFFB8;
+
+    --radius:  14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overscroll-behavior: none;
+  }
+
+  /* ---- LAYOUT ---- */
+  .app {
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    padding: 20px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .logo span { color: var(--eter); }
+
+  .hora-display {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+  }
+
+  /* ---- PÁGINAS ---- */
+  .page { display: none; flex-direction: column; flex: 1; padding: 20px 24px 40px; }
+  .page.ativo { display: flex; animation: fadeUp 0.2s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- INÍCIO ---- */
+  .inicio-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 0;
+  }
+
+  .inicio-saudacao {
+    font-size: 0.7rem;
+    font-family: 'Syne Mono', monospace;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .inicio-titulo {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--text);
+  }
+
+  .inicio-titulo span { color: var(--eter); }
+
+  .inicio-subtitulo {
+    font-size: 0.95rem;
+    color: var(--text2);
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  .btn-registrar {
+    margin-top: 32px;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 20px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.15s;
+    width: 100%;
+  }
+
+  .btn-registrar:active { transform: scale(0.97); }
+  .btn-registrar .icone { font-size: 1.3rem; }
+
+  /* Status rápido */
+  .inicio-status {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .status-label {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .status-valor {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Eventos recentes */
+  .inicio-recentes { margin-top: 28px; }
+  .sec-label {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .evento-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .evento-mini:active { transform: scale(0.98); }
+
+  .evento-mini-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .evento-mini-texto {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .evento-mini-hora {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text3);
+  }
+
+  /* ---- REGISTRO ---- */
+  .reg-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .btn-voltar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-voltar:active { transform: scale(0.96); }
+
+  .reg-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text2);
+  }
+
+  .reg-campo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .reg-campo label {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .reg-campo textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    color: var(--text);
+    resize: none;
+    min-height: 90px;
+    line-height: 1.6;
+  }
+
+  .reg-campo textarea::placeholder { color: var(--text3); }
+
+  /* ---- ÁRVORE DE CLASSIFICAÇÃO ---- */
+  .arvore-section {
+    margin-bottom: 16px;
+  }
+
+  .arvore-nivel {
+    margin-bottom: 12px;
+    animation: fadeUp 0.18s ease;
+  }
+
+  .arvore-nivel-titulo {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .arvore-nivel-titulo .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .arvore-opcoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .arvore-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+  }
+
+  .arvore-chip:active { transform: scale(0.94); }
+
+  .arvore-chip.selecionado {
+    color: var(--bg);
+    border-color: transparent;
+  }
+
+  /* Cores por categoria */
+  .cat-tipo     .arvore-chip.selecionado { background: var(--tipo); }
+  .cat-impacto  .arvore-chip.selecionado { background: var(--impacto); }
+  .cat-ameaca   .arvore-chip.selecionado { background: var(--ameaca); }
+  .cat-pessoa   .arvore-chip.selecionado { background: var(--pessoa); }
+
+  .cat-tipo    .dot { background: var(--tipo); }
+  .cat-impacto .dot { background: var(--impacto); }
+  .cat-ameaca  .dot { background: var(--ameaca); }
+  .cat-pessoa  .dot { background: var(--pessoa); }
+
+  /* ---- JOGOS ---- */
+  .jogos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .jogo-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .jogo-chip:active { transform: scale(0.96); }
+
+  .jogo-chip.selecionado {
+    border-color: var(--eter);
+    background: rgba(176,110,255,0.12);
+  }
+
+  .jogo-num {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+
+  .jogo-nome {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .jogo-chip.selecionado .jogo-nome { color: var(--eter); }
+
+  /* ---- SELEÇÕES ATIVAS ---- */
+  .selecoes-resumo {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    min-height: 48px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .selecao-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: var(--bg);
+  }
+
+  .selecao-tag.tipo    { background: var(--tipo); }
+  .selecao-tag.impacto { background: var(--impacto); }
+  .selecao-tag.ameaca  { background: var(--ameaca); }
+  .selecao-tag.pessoa  { background: var(--pessoa); }
+  .selecao-tag.jogo    { background: var(--eter); }
+
+  .selecoes-vazio {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  /* ---- BOTÃO SALVAR ---- */
+  .btn-salvar {
+    background: var(--agua);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 18px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    margin-top: 8px;
+  }
+
+  .btn-salvar:active { transform: scale(0.97); }
+  .btn-salvar:disabled { opacity: 0.4; }
+
+  /* ---- PADRÕES ---- */
+  .padroes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .padroes-titulo {
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+
+  .padrao-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .padrao-item:active { transform: scale(0.98); }
+
+  .padrao-jogo {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--eter);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .padrao-texto {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .padrao-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .padrao-count {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text3);
+    margin-top: 8px;
+  }
+
+  /* ---- NAV BOTTOM ---- */
+  .nav-bottom {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: rgba(12,12,14,0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    color: var(--text3);
+  }
+
+  .nav-item.ativo { color: var(--text); }
+
+  .nav-item .nav-icone { font-size: 1.3rem; }
+
+  .nav-item .nav-label {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ---- TOAST ---- */
+  #toast-cores {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--agua);
+    color: var(--bg);
+    padding: 10px 22px;
+    border-radius: 20px;
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    opacity: 0;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+  }
+
+  #toast-cores.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast-cores.erro    { background: var(--fogo); }
+
+  /* ---- RESPONSIVO DESKTOP ---- */
+  @media (min-width: 600px) {
+    .app { padding-bottom: 80px; }
+    .nav-bottom { left: 50%; transform: translateX(-50%); width: 480px; border-radius: 20px 20px 0 0; }
+    .inicio-titulo { font-size: 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">co<span>r</span>es</div>
+    <div class="hora-display" id="hora-display"></div>
+  </div>
+
+  <!-- INÍCIO -->
+  <div class="page ativo" id="page-home">
+    <div class="inicio-hero">
+      <div class="inicio-saudacao">jogo da vida</div>
+      <div class="inicio-titulo">O que está<br>acontecendo<span>?</span></div>
+      <div class="inicio-subtitulo">Registre a situação, identifique o jogo, consulte sua base.</div>
+
+      <button class="btn-registrar" onclick="navCores('registro')">
+        <span class="icone">⊕</span>
+        Registrar situação agora
+      </button>
+    </div>
+
+    <div class="inicio-status">
+      <div class="status-card">
+        <div class="status-label">Fase ativa</div>
+        <div class="status-valor" id="cores-fase">—</div>
+      </div>
+      <div class="status-card">
+        <div class="status-label">Eventos hoje</div>
+        <div class="status-valor" id="cores-count">—</div>
+      </div>
+    </div>
+
+    <div class="inicio-recentes">
+      <div class="sec-label">Recentes</div>
+      <div id="recentes-lista">
+        <div style="font-family:'Syne Mono',monospace;font-size:0.7rem;color:var(--text3);padding:12px 0;">
+          Carregando...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div class="page" id="page-registro" style="padding-bottom:100px;">
+    <div class="reg-header">
+      <button class="btn-voltar" onclick="navCores('home')">← Voltar</button>
+      <div class="reg-titulo">Nova Situação</div>
+    </div>
+
+    <!-- Descrição -->
+    <div class="reg-campo">
+      <label>O que está acontecendo</label>
+      <textarea id="evento-descricao" placeholder="Descreva a situação em poucas palavras..." rows="3"></textarea>
+    </div>
+
+    <!-- Árvore de classificação -->
+    <div class="arvore-section">
+
+      <div class="arvore-nivel cat-tipo">
+        <div class="arvore-nivel-titulo">
+          <div class="dot"></div>
+          <span style="color:var(--tipo)">Tipo de evento</span>
+        </div>
+        <div class="arvore-opcoes" id="opcoes-tipo"></div>
+      </div>
+
+      <div class="arvore-nivel cat-impacto">
+        <div class="arvore-nivel-titulo">
+          <div class="dot"></div>
+          <span style="color:var(--impacto)">Impacto</span>
+        </div>
+        <div class="arvore-opcoes" id="opcoes-impacto"></div>
+      </div>
+
+      <div class="arvore-nivel cat-ameaca">
+        <div class="arvore-nivel-titulo">
+          <div class="dot"></div>
+          <span style="color:var(--ameaca)">Ameaça</span>
+        </div>
+        <div class="arvore-opcoes" id="opcoes-ameaca"></div>
+      </div>
+
+      <div class="arvore-nivel cat-pessoa">
+        <div class="arvore-nivel-titulo">
+          <div class="dot"></div>
+          <span style="color:var(--pessoa)">Personagens</span>
+        </div>
+        <div class="arvore-opcoes" id="opcoes-pessoa"></div>
+      </div>
+
+    </div>
+
+    <!-- Jogo ativo -->
+    <div class="sec-label" style="margin-bottom:10px;">Jogo identificado</div>
+    <div class="jogos-grid" id="jogos-grid"></div>
+
+    <!-- Resumo das seleções -->
+    <div class="sec-label" style="margin-bottom:8px;">Classificação</div>
+    <div class="selecoes-resumo" id="selecoes-resumo">
+      <span class="selecoes-vazio">nenhuma seleção ainda</span>
+    </div>
+
+    <button class="btn-salvar" id="btn-salvar-evento" onclick="salvarEvento()">
+      ✦ Salvar situação
+    </button>
+  </div>
+
+  <!-- PADRÕES -->
+  <div class="page" id="page-padroes" style="padding-bottom:100px;">
+    <div class="padroes-header">
+      <div class="padroes-titulo">Padrões</div>
+      <button class="btn-voltar" onclick="carregarPadroes()" style="font-size:0.7rem;">↻</button>
+    </div>
+    <div id="padroes-lista">
+      <div style="font-family:'Syne Mono',monospace;font-size:0.7rem;color:var(--text3);padding:20px 0;">
+        Carregando padrões...
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAV BOTTOM -->
+<nav class="nav-bottom">
+  <button class="nav-item ativo" id="nav-home" onclick="navCores('home')">
+    <span class="nav-icone">◎</span>
+    <span class="nav-label">Agora</span>
+  </button>
+  <button class="nav-item" id="nav-registro" onclick="navCores('registro')">
+    <span class="nav-icone">⊕</span>
+    <span class="nav-label">Registrar</span>
+  </button>
+  <button class="nav-item" id="nav-padroes" onclick="navCores('padroes')">
+    <span class="nav-icone">◈</span>
+    <span class="nav-label">Padrões</span>
+  </button>
+</nav>
+
+<div id="toast-cores"></div>
+
+<script>
+const API = '';
+
+// ---- ÁRVORE DE CLASSIFICAÇÃO ----
+const ARVORE = {
+  tipo: {
+    label: 'Tipo de evento', cat: 'tipo',
+    opcoes: ['Interpessoal','Interno','Externo','Trabalho','Corpo']
+  },
+  impacto: {
+    label: 'Impacto', cat: 'impacto',
+    opcoes: ['Positivo','Negativo','Neutro','Ambíguo']
+  },
+  ameaca: {
+    label: 'Ameaça', cat: 'ameaca',
+    opcoes: ['Nenhuma','Recursos','Relação','Identidade','Corpo']
+  },
+  pessoa: {
+    label: 'Personagens', cat: 'pessoa',
+    opcoes: ['Só eu','Família','Trabalho','Amigos','Desconhecidos']
+  }
+};
+
+const JOGOS = [
+  {num:'01', nome:'Caça',        sub:'Animal / Game'},
+  {num:'02', nome:'Guerra',      sub:'Conquista'},
+  {num:'03', nome:'Superação',   sub:'Corpo'},
+  {num:'04', nome:'Sedução',     sub:'Contato'},
+  {num:'05', nome:'Estratégia',  sub:'Xadrez'},
+  {num:'06', nome:'Oráculo',     sub:'Arquétipo'},
+  {num:'07', nome:'Vício',       sub:'Gambling'},
+  {num:'08', nome:'Brincadeira', sub:'Paidia'},
+  {num:'09', nome:'Play',        sub:'Virtual'},
+  {num:'10', nome:'Projeção',    sub:'Espetáculo'},
+  {num:'11', nome:'Simulação',   sub:'Laboratório'},
+  {num:'12', nome:'Antecipação', sub:'Futuro'},
+];
+
+// Estado de seleções
+let selecoes = { tipo: [], impacto: [], ameaca: [], pessoa: [], jogo: [] };
+
+// ---- INICIALIZAÇÃO ----
+document.addEventListener('DOMContentLoaded', () => {
+  atualizarHora();
+  setInterval(atualizarHora, 30000);
+  renderArvore();
+  renderJogos();
+  carregarStatus();
+  carregarRecentes();
+});
+
+function atualizarHora() {
+  const agora = new Date();
+  document.getElementById('hora-display').textContent =
+    agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+// ---- NAVEGAÇÃO ----
+function navCores(pagina) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('ativo'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('ativo'));
+  document.getElementById('page-' + pagina).classList.add('ativo');
+  const navEl = document.getElementById('nav-' + pagina);
+  if (navEl) navEl.classList.add('ativo');
+
+  if (pagina === 'padroes') carregarPadroes();
+  if (pagina === 'home')    carregarRecentes();
+  if (pagina === 'registro') limparRegistro();
+}
+
+// ---- RENDER ÁRVORE ----
+function renderArvore() {
+  Object.entries(ARVORE).forEach(([key, nivel]) => {
+    const container = document.getElementById('opcoes-' + key);
+    container.innerHTML = nivel.opcoes.map(op =>
+      '<div class="arvore-chip" data-cat="' + key + '" data-val="' + op + '" onclick="toggleChip(this)">' + op + '</div>'
+    ).join('');
+  });
+}
+
+function toggleChip(el) {
+  const cat = el.dataset.cat;
+  const val = el.dataset.val;
+  el.classList.toggle('selecionado');
+
+  if (el.classList.contains('selecionado')) {
+    if (!selecoes[cat].includes(val)) selecoes[cat].push(val);
+  } else {
+    selecoes[cat] = selecoes[cat].filter(v => v !== val);
+  }
+  atualizarResumo();
+}
+
+// ---- RENDER JOGOS ----
+function renderJogos() {
+  const grid = document.getElementById('jogos-grid');
+  grid.innerHTML = JOGOS.map(j =>
+    '<div class="jogo-chip" data-num="' + j.num + '" onclick="toggleJogo(this)">' +
+      '<div class="jogo-num">' + j.num + '</div>' +
+      '<div class="jogo-nome">' + j.nome + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function toggleJogo(el) {
+  const num = el.dataset.num;
+  const jaAtivo = el.classList.contains('selecionado');
+
+  document.querySelectorAll('.jogo-chip').forEach(c => c.classList.remove('selecionado'));
+  selecoes.jogo = [];
+
+  if (!jaAtivo) {
+    el.classList.add('selecionado');
+    selecoes.jogo = [num];
+  }
+  atualizarResumo();
+}
+
+// ---- RESUMO DAS SELEÇÕES ----
+function atualizarResumo() {
+  const wrap = document.getElementById('selecoes-resumo');
+  const tags = [];
+
+  ['tipo','impacto','ameaca','pessoa'].forEach(cat => {
+    selecoes[cat].forEach(v => {
+      tags.push('<span class="selecao-tag ' + cat + '">' + v + '</span>');
+    });
+  });
+
+  selecoes.jogo.forEach(num => {
+    const j = JOGOS.find(x => x.num === num);
+    if (j) tags.push('<span class="selecao-tag jogo">' + j.num + ' · ' + j.nome + '</span>');
+  });
+
+  wrap.innerHTML = tags.length
+    ? tags.join('')
+    : '<span class="selecoes-vazio">nenhuma seleção ainda</span>';
+}
+
+// ---- SALVAR EVENTO ----
+async function salvarEvento() {
+  const descricao = document.getElementById('evento-descricao').value.trim();
+  if (!descricao) {
+    toastCores('Descreva a situação antes de salvar', 'erro');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar-evento');
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  const payload = {
+    descricao,
+    tipo:     selecoes.tipo,
+    impacto:  selecoes.impacto,
+    ameaca:   selecoes.ameaca,
+    pessoa:   selecoes.pessoa,
+    jogo:     selecoes.jogo[0] || '',
+  };
+
+  try {
+    const resp = await fetch(API + '/api/evento/salvar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      toastCores('✓ Situação registrada');
+      setTimeout(() => {
+        limparRegistro();
+        navCores('home');
+      }, 800);
+    }
+  } catch(e) {
+    toastCores('⚠ Servidor offline', 'erro');
+  } finally {
+    btn.textContent = '✦ Salvar situação';
+    btn.disabled = false;
+  }
+}
+
+function limparRegistro() {
+  document.getElementById('evento-descricao').value = '';
+  selecoes = { tipo:[], impacto:[], ameaca:[], pessoa:[], jogo:[] };
+  document.querySelectorAll('.arvore-chip.selecionado').forEach(c => c.classList.remove('selecionado'));
+  document.querySelectorAll('.jogo-chip.selecionado').forEach(c => c.classList.remove('selecionado'));
+  atualizarResumo();
+}
+
+// ---- CARREGAR STATUS ----
+async function carregarStatus() {
+  try {
+    const resp = await fetch(API + '/api/status');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const nomes = { fogo:'🔥 Fogo', ar:'💨 Ar', agua:'💧 Água', terra:'🌱 Terra', eter:'✨ Éter' };
+    document.getElementById('cores-fase').textContent = nomes[data.fase] || data.fase || '—';
+  } catch(e) {}
+}
+
+// ---- CARREGAR RECENTES ----
+async function carregarRecentes() {
+  try {
+    const resp = await fetch(API + '/api/eventos?limite=5');
+    if (!resp.ok) return;
+    const eventos = await resp.json();
+
+    const lista = document.getElementById('recentes-lista');
+    document.getElementById('cores-count').textContent = eventos.length;
+
+    if (!eventos.length) {
+      lista.innerHTML = '<div style="font-family:\'Syne Mono\',monospace;font-size:0.7rem;color:var(--text3);padding:12px 0;">Nenhum evento registrado hoje.</div>';
+      return;
+    }
+
+    const cores_jogo = { '01':'#FF7A5C','02':'#FF4D2E','03':'#E8C840','04':'#FF5C8A',
+      '05':'#4D9EFF','06':'#B06EFF','07':'#FF4D2E','08':'#5CFFB8',
+      '09':'#4D9EFF','10':'#B06EFF','11':'#E8C840','12':'#5CB8FF' };
+
+    lista.innerHTML = eventos.map(e => {
+      const cor = cores_jogo[e.jogo] || 'var(--text3)';
+      return '<div class="evento-mini" onclick="abrirEvento(\'' + (e.arquivo||'') + '\')">' +
+        '<div class="evento-mini-dot" style="background:' + cor + '"></div>' +
+        '<div class="evento-mini-texto">' + (e.descricao || '—') + '</div>' +
+        '<div class="evento-mini-hora">' + (e.hora || '') + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+// ---- CARREGAR PADRÕES ----
+async function carregarPadroes() {
+  try {
+    const resp = await fetch(API + '/api/padroes');
+    if (!resp.ok) return;
+    const padroes = await resp.json();
+    const lista = document.getElementById('padroes-lista');
+
+    if (!padroes.length) {
+      lista.innerHTML = '<div style="font-family:\'Syne Mono\',monospace;font-size:0.7rem;color:var(--text3);padding:20px 0;">Registre mais situações para identificar padrões.</div>';
+      return;
+    }
+
+    lista.innerHTML = padroes.map(p => {
+      const tags = [
+        ...(p.tipo    || []).map(v => '<span class="selecao-tag tipo">'    + v + '</span>'),
+        ...(p.impacto || []).map(v => '<span class="selecao-tag impacto">' + v + '</span>'),
+        ...(p.ameaca  || []).map(v => '<span class="selecao-tag ameaca">'  + v + '</span>'),
+        ...(p.pessoa  || []).map(v => '<span class="selecao-tag pessoa">'  + v + '</span>'),
+      ].join('');
+
+      return '<div class="padrao-item">' +
+        '<div class="padrao-jogo">' + (p.jogo_nome || 'Jogo ' + p.jogo) + '</div>' +
+        '<div class="padrao-texto">' + (p.descricao || '') + '</div>' +
+        '<div class="padrao-tags">' + tags + '</div>' +
+        '<div class="padrao-count">' + (p.data||'') + ' · ' + (p.hora||'') + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+function abrirEvento(arquivo) {
+  if (!arquivo) return;
+  window.open('obsidian://open?vault=obsidian&file=eventos%2F' + encodeURIComponent(arquivo), '_blank');
+}
+
+// ---- TOAST ----
+let toastTimer;
+function toastCores(msg, tipo) {
+  const el = document.getElementById('toast-cores');
+  el.textContent = msg;
+  el.className = 'visivel' + (tipo === 'erro' ? ' erro' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bordão</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f5f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:3rem 1.4rem 5rem;color:#1a1a18;}
+  .back{display:inline-flex;align-items:center;gap:8px;margin-bottom:2rem;
+    padding:8px 18px;font-size:14px;font-weight:500;color:#666;text-decoration:none;
+    border:1px solid rgba(0,0,0,0.14);border-radius:10px;background:#fff;
+    transition:background .15s,color .15s;}
+  .back:hover{background:#f0ede8;color:#111;}
+  .wrap{width:100%;max-width:640px;}
+  .eyebrow{font-size:11px;letter-spacing:.14em;color:#aaa;text-transform:uppercase;margin-bottom:1rem;}
+  h1{font-size:38px;font-weight:400;line-height:1.15;color:#111;margin-bottom:2rem;letter-spacing:-.01em;}
+  h1 em{font-style:normal;color:#888;}
+  .divider{width:40px;height:1px;background:#d0cec8;margin:2rem 0;}
+  p{font-size:16px;line-height:1.8;color:#444;margin-bottom:1.2rem;}
+  .faixa{display:flex;gap:16px;align-items:flex-start;padding:1.2rem 1.4rem;
+    background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:12px;
+    margin-bottom:10px;}
+  .faixa-sym{font-size:28px;font-weight:500;font-family:monospace;min-width:40px;
+    color:#111;line-height:1.1;}
+  .faixa-body{flex:1;}
+  .faixa-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#bbb;margin-bottom:4px;}
+  .faixa-text{font-size:15px;color:#333;line-height:1.6;}
+  .arrow-row{display:flex;gap:8px;margin-top:8px;}
+  .arrow{font-size:18px;opacity:.4;}
+  .arrow.active{opacity:1;}
+  .nota{background:#f0ede8;border-radius:10px;padding:1rem 1.2rem;
+    font-size:13px;color:#777;line-height:1.7;margin-top:2rem;}
+  .nota strong{color:#444;}
+  .link-orch{display:inline-flex;align-items:center;gap:8px;margin-top:2rem;
+    padding:10px 22px;font-size:14px;font-weight:500;color:#fff;text-decoration:none;
+    background:#1a1a18;border-radius:10px;transition:background .15s;}
+  .link-orch:hover{background:#333;}
+</style></head><body>
+
+<a class="back" href="index.html">← índice</a>
+
+<div class="wrap">
+  <div class="eyebrow">Chat B · bordão</div>
+  <h1>para quem estou<br>dirigindo <em>isso</em>,<br>aqui, agora.</h1>
+
+  <div class="divider"></div>
+
+  <p>O bordão é a nota que sustenta. Não muda enquanto tudo oscila em volta dela.
+  É a pergunta que fica enquanto as respostas se alternam.</p>
+
+  <p>Cada faixa é um campo de endereçamento. O símbolo é o nome do campo.
+  A seta é a direção da intenção. O número é a posição na sequência.</p>
+
+  <div class="divider"></div>
+
+  <div class="faixa">
+    <div class="faixa-sym">A</div>
+    <div class="faixa-body">
+      <div class="faixa-label">faixa 1 · destinatário</div>
+      <div class="faixa-text">Para quem? Eu, outro, nenhum, todos.<br>
+        A pergunta de origem de qualquer frase.</div>
+      <div class="arrow-row">
+        <span class="arrow active">↑</span>
+        <span class="arrow">↓</span>
+        <span class="arrow">→</span>
+        <span class="arrow">←</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="faixa">
+    <div class="faixa-sym">B 3</div>
+    <div class="faixa-body">
+      <div class="faixa-label">faixa 2 · posição relativa</div>
+      <div class="faixa-text">De onde para onde? Direita/esquerda como narrativa.
+        Cima/baixo como camadas de profundidade.</div>
+      <div class="arrow-row">
+        <span class="arrow">↑</span>
+        <span class="arrow">↓</span>
+        <span class="arrow active">→</span>
+        <span class="arrow">←</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="faixa">
+    <div class="faixa-sym">1·2</div>
+    <div class="faixa-body">
+      <div class="faixa-label">alternância binária · tik · tak</div>
+      <div class="faixa-text">eu ↔ outro · pergunta ↔ resposta · presente ↔ ausente.<br>
+        O pulso mínimo de qualquer troca.</div>
+    </div>
+  </div>
+
+  <div class="faixa">
+    <div class="faixa-sym">1·2·1</div>
+    <div class="faixa-body">
+      <div class="faixa-label">alternância ternária · retorno</div>
+      <div class="faixa-text">Introdução · tensão · retorno.<br>
+        A célula do jogo da vida: conta os vizinhos, decide o estado seguinte.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <p>O jogo da vida é uma máquina de endereçamento contínuo —
+  cada célula pergunta <em style="font-style:italic;color:#888">"quantos vivos me cercam?"</em>
+  e a resposta determina seu próximo estado.
+  O que estamos construindo é a mesma coisa, mas consciente:
+  uma célula que sabe que está perguntando.</p>
+
+  <div class="nota">
+    <strong>conexão ritmo / vida:</strong> as faixas são vizinhanças.
+    O bordão é a célula central. Tik e tak são os estados vivo/morto.
+    A alternância é a regra de transição. O compasso é uma geração.
+  </div>
+
+  <a class="link-orch" href="orquestra.html">abrir orquestra →</a>
+</div>
+
+</body></html>

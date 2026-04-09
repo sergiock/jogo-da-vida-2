@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tik Tak · Som</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a0a;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+  .stage{width:100%;max-width:600px;aspect-ratio:1/1;position:relative;overflow:hidden;border-radius:12px;background:#0a0a0a;cursor:pointer}
+  .axis{position:absolute;left:0;right:0;top:50%;height:0.5px;background:rgba(255,255,255,0.15)}
+  .ball{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translateX(-50%);opacity:0;transition:opacity 0.03s}
+  .ball.red{background:#E24B4A;top:2%}
+  .ball.blue{background:#378ADD;bottom:2%}
+  .ring{aspect-ratio:1/1;border-radius:50%;position:absolute;left:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none}
+  .lbl{position:absolute;left:50%;transform:translateX(-50%);font-size:clamp(16px,4vw,32px);font-weight:500;opacity:0;letter-spacing:0.05em}
+  .lbl.tik{top:4%;color:#fff}
+  .lbl.tak{bottom:4%;color:#fff}
+  .hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:rgba(255,255,255,0.6);text-align:center;line-height:1.7}
+  .controls{display:flex;align-items:center;gap:10px;padding:0.7rem 0 0;flex-wrap:wrap;width:100%;max-width:600px}
+  .btn{padding:6px 16px;border:0.5px solid rgba(255,255,255,0.2);border-radius:8px;font-size:13px;background:transparent;color:#ccc;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,0.08)}
+  .sep{width:0.5px;height:18px;background:rgba(255,255,255,0.15)}
+  .lc{font-size:12px;color:#888;white-space:nowrap}
+  .gv{font-size:12px;font-weight:500;font-family:monospace;min-width:32px;color:#fff}
+  a.back{display:inline-block;margin-bottom:1rem;font-size:12px;color:#555;text-decoration:none}
+  a.back:hover{color:#aaa}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← índice</a>
+<div class="stage" id="stage" onclick="initAndToggle()">
+  <div class="axis"></div>
+  <div class="ball red" id="ball-red"></div>
+  <div class="ball blue" id="ball-blue"></div>
+  <div class="ring" id="ring"></div>
+  <div class="lbl tik" id="lbl-tik">tik</div>
+  <div class="lbl tak" id="lbl-tak">tak</div>
+  <div class="hint" id="hint">toque para iniciar</div>
+</div>
+<div class="controls">
+  <button class="btn" id="btn-play" onclick="initAndToggle()">▶ play</button>
+  <div class="sep"></div>
+  <span class="lc">bpm</span>
+  <input type="range" min="20" max="200" step="1" value="60" oninput="setBpm(+this.value)" style="width:100px;accent-color:#fff">
+  <span class="gv" id="bpm-lbl">60</span>
+  <div class="sep"></div>
+  <span class="lc">divisão</span>
+  <button class="btn" onclick="setDiv(1)">÷2</button>
+  <button class="btn" onclick="setDiv(2)">÷4</button>
+  <button class="btn" onclick="setDiv(3)">÷8</button>
+</div>
+<script>
+  let audioCtx=null,playing=false,bpm=60,divN=1,timer=null,stepN=0,ballSz=0;
+  const stage=document.getElementById('stage');
+  const bRed=document.getElementById('ball-red');
+  const bBlue=document.getElementById('ball-blue');
+  const ring=document.getElementById('ring');
+  const lTik=document.getElementById('lbl-tik');
+  const lTak=document.getElementById('lbl-tak');
+  const hint=document.getElementById('hint');
+  function resize(){ballSz=Math.round(stage.offsetWidth*0.72);bRed.style.width=ballSz+'px';bBlue.style.width=ballSz+'px';}
+  window.addEventListener('resize',resize);resize();
+  function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+  function playTone(freq,gain,dur){const ctx=getCtx();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.setValueAtTime(freq,ctx.currentTime);g.gain.setValueAtTime(gain,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);o.start();o.stop(ctx.currentTime+dur);}
+  function animRing(tik){const s=stage.offsetWidth;ring.style.width=ballSz+'px';ring.style.height=ballSz+'px';ring.style.left='50%';ring.style.top=tik?(ballSz/2+s*0.02)+'px':(s-ballSz/2-s*0.02)+'px';ring.style.border='2px solid '+(tik?'#E24B4A':'#378ADD');ring.style.opacity='0.9';ring.style.transition='none';ring.style.transform='translate(-50%,-50%) scale(1)';requestAnimationFrame(()=>requestAnimationFrame(()=>{ring.style.transition='transform 0.5s ease-out,opacity 0.5s ease-out';ring.style.transform='translate(-50%,-50%) scale(1.4)';ring.style.opacity='0';}));}
+  function showTik(){playTone(1200,0.45,0.07);bRed.style.opacity='1';bBlue.style.opacity='0';lTik.style.opacity='1';lTak.style.opacity='0';animRing(true);}
+  function showTak(){playTone(400,0.38,0.13);bBlue.style.opacity='1';bRed.style.opacity='0';lTak.style.opacity='1';lTik.style.opacity='0';animRing(false);}
+  function hideAll(){bRed.style.opacity='0';bBlue.style.opacity='0';lTik.style.opacity='0';lTak.style.opacity='0';}
+  function getHalfMs(){return(60000/bpm)/Math.pow(2,divN-1)/2;}
+  function tick(){const parts=Math.pow(2,divN);const phase=stepN%(parts*2);const beatIdx=Math.floor(phase/2);const isShow=phase%2===0;if(isShow){beatIdx%2===0?showTik():showTak();}else{hideAll();}stepN++;timer=setTimeout(tick,getHalfMs());}
+  function stopTimer(){if(timer){clearTimeout(timer);timer=null;}}
+  function startTimer(){stopTimer();stepN=0;tick();}
+  function initAndToggle(){getCtx();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();playing=!playing;hint.style.display='none';document.getElementById('btn-play').textContent=playing?'⏸ pausar':'▶ play';if(playing)startTimer();else{stopTimer();hideAll();}}
+  function setBpm(v){bpm=v;document.getElementById('bpm-lbl').textContent=v;if(playing)startTimer();}
+  function setDiv(d){divN=d;if(playing)startTimer();}
+</script>
+</body>
+</html>

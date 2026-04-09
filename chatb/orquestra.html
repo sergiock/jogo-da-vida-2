@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Orquestra</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    min-height:100vh;color:#e0e0e0;padding:1rem;}
+
+  /* TOP BAR */
+  .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:.8rem 1rem;background:#181818;border-radius:12px;margin-bottom:1rem;}
+  .back{padding:7px 16px;font-size:13px;font-weight:500;color:#aaa;text-decoration:none;
+    border:.5px solid rgba(255,255,255,0.18);border-radius:8px;background:transparent;
+    transition:background .15s;}
+  .back:hover{background:rgba(255,255,255,.08);color:#fff;}
+  .bar-title{font-size:14px;font-weight:500;color:#fff;margin-right:auto;}
+  .bar-sep{width:.5px;height:20px;background:rgba(255,255,255,.12);}
+  .ctrl-lbl{font-size:12px;color:#666;white-space:nowrap;}
+  .ctrl-val{font-size:12px;font-weight:500;font-family:monospace;min-width:32px;color:#fff;}
+  input[type=range]{accent-color:#fff;}
+  .btn{padding:6px 14px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;
+    font-size:12px;background:transparent;color:#ccc;cursor:pointer;white-space:nowrap;}
+  .btn:hover{background:rgba(255,255,255,.08);}
+  .btn.on{background:rgba(255,255,255,.14);color:#fff;font-weight:500;}
+  .btn.red{border-color:rgba(226,75,74,.5);color:#f09595;}
+  .btn.red:hover{background:rgba(226,75,74,.12);}
+
+  /* MESSAGE BOX */
+  .msg-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    padding:.7rem 1rem;background:#181818;border-radius:12px;margin-bottom:1rem;}
+  .msg-input{flex:1;min-width:180px;padding:7px 12px;background:rgba(255,255,255,.05);
+    border:.5px solid rgba(255,255,255,.15);border-radius:8px;color:#e0e0e0;font-size:13px;outline:none;}
+  .msg-input:focus{border-color:rgba(255,255,255,.35);}
+  .msg-input::placeholder{color:#444;}
+  .target-sel{padding:7px 10px;background:rgba(255,255,255,.05);border:.5px solid rgba(255,255,255,.15);
+    border-radius:8px;color:#e0e0e0;font-size:13px;outline:none;cursor:pointer;}
+
+  /* GRID */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+
+  .tile{background:#181818;border:.5px solid rgba(255,255,255,.1);border-radius:12px;
+    overflow:hidden;display:flex;flex-direction:column;}
+  .tile-header{display:flex;align-items:center;gap:8px;padding:.6rem .9rem;
+    border-bottom:.5px solid rgba(255,255,255,.08);}
+  .tile-sym{font-size:16px;font-family:monospace;font-weight:500;color:#fff;min-width:28px;}
+  .tile-name{font-size:12px;color:#888;flex:1;}
+  .tile-toggle{padding:4px 10px;font-size:11px;border:.5px solid rgba(255,255,255,.15);
+    border-radius:6px;background:transparent;color:#666;cursor:pointer;}
+  .tile-toggle.active{border-color:rgba(255,255,255,.3);color:#ddd;}
+  .tile iframe{width:100%;border:none;display:block;aspect-ratio:1/1;background:#0a0a0a;}
+  .tile-footer{padding:.5rem .9rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .tile-status{font-size:11px;color:#555;font-family:monospace;flex:1;}
+
+  /* STATUS BAR */
+  .statusbar{margin-top:1rem;padding:.6rem 1rem;background:#181818;border-radius:10px;
+    font-size:12px;color:#555;font-family:monospace;display:flex;gap:16px;flex-wrap:wrap;}
+  .statusbar span{color:#888;}
+</style>
+</head><body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a class="back" href="index.html">← índice</a>
+  <div class="bar-title">orquestra</div>
+  <div class="bar-sep"></div>
+  <span class="ctrl-lbl">bpm global</span>
+  <input type="range" min="20" max="200" step="1" value="60" id="g-bpm" oninput="globalBpm(+this.value)" style="width:90px">
+  <span class="ctrl-val" id="g-bpm-lbl">60</span>
+  <div class="bar-sep"></div>
+  <span class="ctrl-lbl">divisão</span>
+  <button class="btn on" id="gd-2"  onclick="globalDiv('bin',1)">÷2</button>
+  <button class="btn"    id="gd-4"  onclick="globalDiv('bin',2)">÷4</button>
+  <button class="btn"    id="gd-8"  onclick="globalDiv('bin',3)">÷8</button>
+  <button class="btn"    id="gd-3"  onclick="globalDiv('ter',3)">÷3</button>
+  <button class="btn"    id="gd-6"  onclick="globalDiv('ter',6)">÷6</button>
+  <div class="bar-sep"></div>
+  <button class="btn on" id="btn-play-all" onclick="toggleAll()">⏸ pausar todos</button>
+  <button class="btn red" onclick="resetAll()">↺ reiniciar</button>
+</div>
+
+<!-- MESSAGE ROW -->
+<div class="msg-row">
+  <span class="ctrl-lbl">endereço →</span>
+  <select class="target-sel" id="msg-target">
+    <option value="all">todos</option>
+  </select>
+  <input class="msg-input" id="msg-input" placeholder="mensagem / comando (ex: {bpm:90} ou texto livre)">
+  <button class="btn on" onclick="sendMsg()">enviar ↗</button>
+  <div class="bar-sep"></div>
+  <span class="ctrl-lbl">bordão</span>
+  <a href="bordao.html" target="_blank"
+    style="padding:6px 14px;border:.5px solid rgba(255,255,255,0.2);border-radius:8px;
+    font-size:12px;color:#ccc;text-decoration:none;">abrir →</a>
+</div>
+
+<!-- INSTRUMENT GRID -->
+<div class="grid" id="grid"></div>
+
+<!-- STATUS -->
+<div class="statusbar" id="statusbar">
+  <div>instrumentos: <span id="st-count">0</span></div>
+  <div>bpm: <span id="st-bpm">60</span></div>
+  <div>divisão: <span id="st-div">÷2</span></div>
+  <div>mensagens enviadas: <span id="st-msgs">0</span></div>
+</div>
+
+<script>
+const INSTRUMENTS = [
+  {id:'tik-tak-som',     sym:'●',  name:'tik · tak · som',        file:'tik-tak-som.html'},
+  {id:'compasso',        sym:'⬤',  name:'compasso · cima · baixo', file:'compasso-cima-baixo.html'},
+  {id:'seis-canais',     sym:'▬',  name:'seis canais',             file:'seis-canais.html'},
+  {id:'faixas-v1',       sym:'▤',  name:'faixas numeradas',        file:'faixas-numeradas-v1.html'},
+  {id:'faixas-v2',       sym:'▣',  name:'faixas num · pulso',      file:'faixas-numeradas-v2.html'},
+  {id:'faixas-tiktaksom',sym:'◈',  name:'faixas + tik·tak + som',  file:'faixas-tik-tak-som.html'},
+];
+
+let allPlaying = true;
+let globalBpmVal = 60;
+let msgCount = 0;
+
+// build grid & target selector
+const grid = document.getElementById('grid');
+const sel  = document.getElementById('msg-target');
+
+INSTRUMENTS.forEach(inst => {
+  // tile
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.id = 'tile-' + inst.id;
+  tile.innerHTML = `
+    <div class="tile-header">
+      <span class="tile-sym">${inst.sym}</span>
+      <span class="tile-name">${inst.name}</span>
+      <button class="tile-toggle active" id="tog-${inst.id}" onclick="toggleTile('${inst.id}')">■ ativo</button>
+    </div>
+    <iframe id="fr-${inst.id}" src="${inst.file}" scrolling="no"></iframe>
+    <div class="tile-footer">
+      <span class="tile-status" id="st-${inst.id}">pronto</span>
+      <button class="btn" style="font-size:11px;padding:3px 8px"
+        onclick="sendTo('${inst.id}',{type:'ping'})">ping</button>
+    </div>`;
+  grid.appendChild(tile);
+
+  // selector option
+  const opt = document.createElement('option');
+  opt.value = inst.id; opt.textContent = inst.sym + ' ' + inst.name;
+  sel.appendChild(opt);
+});
+
+document.getElementById('st-count').textContent = INSTRUMENTS.length;
+
+// ── postMessage broadcast ────────────────────────────────────
+function sendTo(id, msg) {
+  const fr = document.getElementById('fr-' + id);
+  if (fr && fr.contentWindow) {
+    try { fr.contentWindow.postMessage(msg, '*'); } catch(e){}
+  }
+  msgCount++;
+  document.getElementById('st-msgs').textContent = msgCount;
+  if (id !== 'all') {
+    const el = document.getElementById('st-' + id);
+    if (el) el.textContent = JSON.stringify(msg).slice(0,40);
+  }
+}
+
+function broadcast(msg) {
+  INSTRUMENTS.forEach(i => sendTo(i.id, msg));
+}
+
+function globalBpm(v) {
+  globalBpmVal = v;
+  document.getElementById('g-bpm-lbl').textContent = v;
+  document.getElementById('st-bpm').textContent = v;
+  broadcast({type:'bpm', value: v});
+}
+
+function globalDiv(mode, n) {
+  const label = mode === 'bin' ? ['÷2','÷4','÷8'][n-1] : '÷'+n;
+  document.getElementById('st-div').textContent = label;
+  ['gd-2','gd-4','gd-8','gd-3','gd-6'].forEach(id => {
+    const b = document.getElementById(id); if(b) b.classList.remove('on');
+  });
+  const key = mode === 'bin' ? 'gd-'+[2,4,8][n-1] : 'gd-'+n;
+  const btn = document.getElementById(key); if(btn) btn.classList.add('on');
+  broadcast({type:'div', mode, n});
+}
+
+function toggleAll() {
+  allPlaying = !allPlaying;
+  const btn = document.getElementById('btn-play-all');
+  btn.textContent = allPlaying ? '⏸ pausar todos' : '▶ play todos';
+  btn.classList.toggle('on', allPlaying);
+  broadcast({type: allPlaying ? 'play' : 'pause'});
+}
+
+function resetAll() {
+  broadcast({type:'reset'});
+  INSTRUMENTS.forEach(i => {
+    const el = document.getElementById('st-'+i.id);
+    if(el) el.textContent = 'reiniciado';
+  });
+}
+
+function toggleTile(id) {
+  const fr  = document.getElementById('fr-' + id);
+  const btn = document.getElementById('tog-' + id);
+  const tile= document.getElementById('tile-' + id);
+  const isActive = btn.classList.contains('active');
+  btn.classList.toggle('active', !isActive);
+  btn.textContent = isActive ? '○ inativo' : '■ ativo';
+  fr.style.opacity = isActive ? '0.25' : '1';
+  fr.style.pointerEvents = isActive ? 'none' : 'auto';
+  sendTo(id, {type: isActive ? 'pause' : 'play'});
+}
+
+function sendMsg() {
+  const raw = document.getElementById('msg-input').value.trim();
+  const target = document.getElementById('msg-target').value;
+  if (!raw) return;
+
+  let msg;
+  try { msg = JSON.parse(raw); } catch(e) { msg = {type:'message', text: raw}; }
+
+  if (target === 'all') broadcast(msg);
+  else sendTo(target, msg);
+
+  document.getElementById('msg-input').value = '';
+}
+
+// listen for messages back from iframes
+window.addEventListener('message', e => {
+  const d = e.data;
+  if (!d || !d.from) return;
+  const el = document.getElementById('st-' + d.from);
+  if (el) el.textContent = d.status || JSON.stringify(d).slice(0,40);
+});
+</script>
+</body></html>
