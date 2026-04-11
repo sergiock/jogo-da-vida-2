@@ -23,15 +23,42 @@ proximos: [R1-servidor-único]
 
 ## O que foi mapeado
 
-Sessão de integração do Jogo da Vida. Objetivo: mapear o estado atual de cada peça construída em múltiplos chats e identificar o próximo nível de integração.
+Sessão de integração do Jogo da Vida. 
+
+Objetivo: 
+
+mapear o estado atual de cada peça
+
+construída em múltiplos chats 
+
+e identificar
+o próximo nível de integração.
 
 ## Descobertas centrais
 
-- A grade 12×12 é a mesma estrutura vista de dois ângulos — cordas×alturas no instrumento, canais×momentos no resumo do Chat A. Coincidência intencional.
-- A corda 6 (regra matemática do autômato) e o canal 6 oculto (dobra, espelho, o meio) são a mesma entidade.
-- O especificador não é entrada nem saída do instrumento — é a camada 3, o observador. O que torna o mapa possível sem estar no mapa.
-- O canal 6 atravessa as três camadas verticalmente. Por isso é oculto — não pertence a nenhuma camada, pertence ao eixo que as conecta.
-- Cada compasso existe simultaneamente como: estado matemático (camada 1) + código classificado (camada 2) + narrativa observada (camada 3).
+- A grade 12×12 
+	- é a mesma estrutura 
+		- vista de dois ângulos 
+		  — cordas×alturas no instrumento, 
+		  canais×momentos no resumo do Chat A. 
+		- Coincidência intencional.
+- A corda 6 (regra matemática do autômato)
+	- e o canal 6 oculto (dobra, espelho, o meio) 
+		- são a mesma entidade.
+- O especificador não é entrada nem saída do instrumento 
+  — é a camada 3, o observador. 
+	- O que torna o mapa possível sem estar no mapa.
+- O canal 6 atravessa as três camadas verticalmente. 
+	- Por isso é oculto 
+	  — não pertence a nenhuma camada, 
+		- pertence ao eixo que as conecta.
+- Cada compasso existe simultaneamente como: 
+	- estado matemático
+	   (camada 1) 
+	+ código classificado 
+	  (camada 2)
+	+ narrativa observada 
+	  (camada 3).
 
 ## Arquitetura em três camadas
 

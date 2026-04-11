@@ -260,6 +260,10 @@ class Handler(BaseHTTPRequestHandler):
             resultado = self._excluir_nota(dados)
             self._json(resultado)
 
+        elif path == "/api/registro/sessao":
+            resultado = self._atualizar_sessao(dados)
+            self._json(resultado)
+
         else:
             self.send_response(404)
             self.end_headers()
@@ -1300,6 +1304,32 @@ atualizado: {hoje} {hora}
             "total_registros": len(registros_encontrados),
             "total_consultas": len(consultas_encontradas)
         }
+
+
+    def _atualizar_sessao(self, dados):
+        """Atualiza o session_id de um registro existente."""
+        arquivo  = dados.get("arquivo", "")
+        novo_id  = dados.get("session_id", "").strip()
+
+        if not arquivo or ".." in arquivo or "/" in arquivo:
+            return {"ok": False, "erro": "arquivo inválido"}
+
+        caminho = REGISTROS / arquivo
+        if not caminho.exists():
+            return {"ok": False, "erro": "arquivo não encontrado"}
+
+        conteudo = caminho.read_text(encoding="utf-8")
+
+        # Substitui session_id no frontmatter
+        if re.search(r'^session_id:', conteudo, re.MULTILINE):
+            conteudo = re.sub(r'^session_id:.*$', f'session_id: {novo_id}', conteudo, flags=re.MULTILINE)
+        else:
+            # Adiciona antes do fechamento do frontmatter
+            conteudo = conteudo.replace('---\n\n#', f'session_id: {novo_id}\n---\n\n#', 1)
+
+        caminho.write_text(conteudo, encoding="utf-8")
+        print(f"  ✅ Sessão atualizada: {arquivo} → {novo_id}")
+        return {"ok": True, "arquivo": arquivo, "session_id": novo_id}
 
 
 # ---- EXECUÇÃO ----

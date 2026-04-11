@@ -466,6 +466,7 @@
     padding: 8px 28px;
     border-bottom: 1px solid var(--border);
     background: var(--bg2);
+    border-left: 2px solid var(--ar);
   }
 
   .sessao-label {
@@ -473,7 +474,7 @@
     font-size: 0.6rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--text3);
+    color: var(--ar);
     white-space: nowrap;
   }
 
@@ -484,11 +485,13 @@
     background: transparent;
     font-family: 'DM Mono', monospace;
     font-size: 0.75rem;
-    color: var(--text2);
+    color: var(--text);
     padding: 4px 0;
   }
 
   .registro-sessao-wrap input::placeholder { color: var(--text3); }
+  .registro-sessao-wrap.preenchido { border-left-color: var(--eter); }
+  .registro-sessao-wrap.preenchido .sessao-label { color: var(--eter); }
 
   /* CONSULTAS ANTERIORES */
   .consulta-item {
@@ -1124,6 +1127,18 @@
       <button id="btn-salvar" class="btn btn-primary" onclick="salvarRegistro()">✦ Salvar registro</button>
       <button class="btn btn-outline" onclick="navegar('registro', null)">Ver histórico</button>
     </div>
+
+    <!-- Anexos no registro novo -->
+    <div id="anexos-novo-wrap" style="display:none; margin-top:12px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px;">Anexos</div>
+      <div id="anexos-novo-lista" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+    </div>
+    <div class="btn-row" style="margin-top:6px;">
+      <label class="btn btn-outline" style="cursor:pointer; font-size:0.7rem; padding:5px 12px;">
+        ⊕ Anexar arquivo
+        <input type="file" id="anexo-novo-input" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.mp3,.m4a,.txt,.md" style="display:none" onchange="previewAnexosNovo(this)">
+      </label>
+    </div>
   </div>
 
   <!-- REGISTRO -->
@@ -1142,6 +1157,7 @@
         <datalist id="sessoes-disponiveis"></datalist>
         <button class="btn btn-outline sessao-export-btn" onclick="exportarSessao()">⊞ Gerar JSON</button>
         <button class="btn btn-outline sessao-export-btn" onclick="exportarSessaoTexto()">✦ Copiar texto</button>
+        <button class="btn btn-outline sessao-export-btn" onclick="gerarArquivoSessao()" style="border-color:var(--eter); color:var(--eter);">◈ Salvar arquivo</button>
       </div>
       <div id="export-status" style="display:none; font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--text3); margin-top:8px;"></div>
       <!-- Seletor dos 12 jogos/chats -->
@@ -1192,6 +1208,14 @@
         <button class="btn btn-outline" style="margin-left:auto; color:var(--fogo); border-color:var(--fogo);" onclick="excluirNota('registro')">🗑 Excluir registro</button>
       </div>
       <div class="detalhe-badges" id="detalhe-badges"></div>
+
+      <!-- Sessão editável -->
+      <div class="registro-sessao-wrap" id="detalhe-sessao-wrap" style="margin-bottom:0; border-radius:0;">
+        <span class="sessao-label">sessão</span>
+        <input id="detalhe-sessao" type="text" placeholder="definir session_id..." autocomplete="off">
+        <button class="btn btn-outline" id="detalhe-sessao-btn" onclick="salvarSessaoDetalhe()" style="padding:3px 10px; font-size:0.65rem; flex-shrink:0;">salvar</button>
+      </div>
+
       <div class="detalhe-secao">
         <div class="detalhe-label">Como estava</div>
         <div class="detalhe-texto" id="detalhe-agora"></div>
@@ -1203,6 +1227,18 @@
       <div class="detalhe-secao">
         <div class="detalhe-label">Reflexão</div>
         <div class="detalhe-texto" id="detalhe-reflexao"></div>
+      </div>
+
+      <!-- Anexos no detalhe -->
+      <div class="detalhe-secao" id="detalhe-anexos-secao" style="display:none;">
+        <div class="detalhe-label">Anexos</div>
+        <div id="detalhe-anexos-lista" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="btn btn-outline" style="cursor:pointer; font-size:0.7rem; padding:5px 12px;">
+          ⊕ Anexar arquivo
+          <input type="file" id="anexo-detalhe-input" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.mp3,.m4a,.txt,.md" style="display:none" onchange="uploadAnexosDetalhe(this)">
+        </label>
       </div>
 
       <!-- CONSULTAS ANTERIORES -->
@@ -1556,6 +1592,25 @@
 
     // Carrega registro de hoje
     await carregarRegistroHoje();
+
+    // Indicador visual do campo sessão ao digitar
+    const sessaoInput = document.getElementById('registro-sessao');
+    sessaoInput.addEventListener('input', () => {
+      sessaoInput.closest('.registro-sessao-wrap').classList.toggle('preenchido', sessaoInput.value.trim().length > 0);
+    });
+
+    // Força text/plain ao colar resposta da IA — preserva markdown
+    const respostaTA = document.getElementById('notebooklm-resposta');
+    respostaTA.addEventListener('paste', (e) => {
+      const plain = e.clipboardData.getData('text/plain');
+      if (!plain) return;
+      e.preventDefault();
+      const start = respostaTA.selectionStart;
+      const end   = respostaTA.selectionEnd;
+      const val   = respostaTA.value;
+      respostaTA.value = val.slice(0, start) + plain + val.slice(end);
+      respostaTA.selectionStart = respostaTA.selectionEnd = start + plain.length;
+    });
   });
 
   function atualizarDataPipe() {
@@ -1585,6 +1640,12 @@
       const resp = await fetch(API + '/api/registro/hoje');
       if (!resp.ok) return;
       const dados = await resp.json();
+      if (dados.titulo)   document.getElementById('registro-titulo').value           = dados.titulo;
+      if (dados.session_id) {
+        const sessaoInput = document.getElementById('registro-sessao');
+        sessaoInput.value = dados.session_id;
+        sessaoInput.closest('.registro-sessao-wrap').classList.add('preenchido');
+      }
       if (dados.agora)    document.querySelector('#tab-agora textarea').value    = dados.agora;
       if (dados.foco)     document.querySelector('#tab-foco textarea').value     = dados.foco;
       if (dados.reflexao) document.querySelector('#tab-reflexao textarea').value = dados.reflexao;
@@ -1614,6 +1675,14 @@
       });
       const result = await resp.json();
       if (result.ok) {
+        // Upload de anexos pendentes
+        if (anexosPendentes.length) {
+          await uploadAnexos(result.arquivo, anexosPendentes);
+          anexosPendentes = [];
+          document.getElementById('anexo-novo-input').value = '';
+          document.getElementById('anexos-novo-wrap').style.display = 'none';
+          document.getElementById('anexos-novo-lista').innerHTML = '';
+        }
         toast('✓ Registro salvo — ' + (result.arquivo || ''), 'ok');
         btn.textContent = '✓ Salvo';
         setTimeout(() => {
@@ -1632,7 +1701,9 @@
 
   function novoRegistro() {
     document.getElementById('registro-titulo').value  = '';
-    document.getElementById('registro-sessao').value  = '';
+    const sessaoInput = document.getElementById('registro-sessao');
+    sessaoInput.value = '';
+    sessaoInput.closest('.registro-sessao-wrap').classList.remove('preenchido');
     document.querySelector('#tab-agora textarea').value    = '';
     document.querySelector('#tab-foco textarea').value     = '';
     document.querySelector('#tab-reflexao textarea').value = '';
@@ -1936,6 +2007,28 @@
     navigator.clipboard.writeText(conteudo).then(() => {
       toast('✓ Copiado para Jogo ' + num + ' · ' + nome, 'ok');
     });
+  }
+
+  async function gerarArquivoSessao() {
+    const sessionId = document.getElementById('export-session-id').value.trim();
+    if (!sessionId) { toast('Digite um session_id', 'erro'); return; }
+    setExportStatus('Gerando arquivo...', '');
+    try {
+      const resp = await fetch(API + '/api/sessao/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const data = await resp.json();
+      if (!data.ok) { setExportStatus('⚠ ' + (data.erro || 'erro'), 'erro'); return; }
+      navigator.clipboard.writeText(data.texto).then(() => {});
+      setExportStatus(
+        `✓ Salvo: ${data.arquivo} · ${data.total_registros} registro(s) · ${data.total_consultas} consulta(s) · texto copiado`,
+        'ok'
+      );
+    } catch(e) {
+      setExportStatus('⚠ Erro ao gerar arquivo', 'erro');
+    }
   }
 
   function setExportStatus(msg, tipo) {
@@ -2574,8 +2667,108 @@
     document.getElementById('detalhe-foco').textContent     = r.foco     || '—';
     document.getElementById('detalhe-reflexao').textContent = r.reflexao || '—';
 
+    // Carrega anexos
+    carregarAnexosDetalhe(r.arquivo);
+
+    // Campo sessão editável
+    const sessaoInput = document.getElementById('detalhe-sessao');
+    const sessaoWrap  = document.getElementById('detalhe-sessao-wrap');
+    sessaoInput.value = r.session_id || '';
+    sessaoWrap.classList.toggle('preenchido', !!(r.session_id));
+    sessaoInput.oninput = () => sessaoWrap.classList.toggle('preenchido', sessaoInput.value.trim().length > 0);
+
     // Carrega consultas associadas
     carregarConsultasDoRegistro(r.arquivo);
+  }
+
+  // ---- ANEXOS ----
+
+  let anexosPendentes = []; // arquivos selecionados antes de salvar o registro
+
+  function previewAnexosNovo(input) {
+    anexosPendentes = Array.from(input.files);
+    const wrap = document.getElementById('anexos-novo-wrap');
+    const lista = document.getElementById('anexos-novo-lista');
+    if (!anexosPendentes.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    lista.innerHTML = anexosPendentes.map(f =>
+      `<span style="font-family:'DM Mono',monospace; font-size:0.65rem; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:2px 8px; color:var(--text2);">${f.name}</span>`
+    ).join('');
+  }
+
+  async function uploadAnexos(arquivoRegistro, files) {
+    const resultados = [];
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('registro', arquivoRegistro);
+      try {
+        const resp = await fetch(API + '/api/anexo/upload', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.ok) resultados.push(data.arquivo);
+      } catch(e) { console.error('upload erro:', e); }
+    }
+    return resultados;
+  }
+
+  async function uploadAnexosDetalhe(input) {
+    if (!registroAtual) return;
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    toast('Enviando anexos...', '');
+    const salvos = await uploadAnexos(registroAtual.arquivo, files);
+    if (salvos.length) {
+      toast(`✓ ${salvos.length} anexo(s) salvos`, 'ok');
+      carregarAnexosDetalhe(registroAtual.arquivo);
+    }
+    input.value = '';
+  }
+
+  async function carregarAnexosDetalhe(arquivoRegistro) {
+    try {
+      const resp = await fetch(API + '/api/anexos?registro=' + encodeURIComponent(arquivoRegistro));
+      const data = await resp.json();
+      const secao = document.getElementById('detalhe-anexos-secao');
+      const lista = document.getElementById('detalhe-anexos-lista');
+      if (!data.arquivos?.length) { secao.style.display = 'none'; return; }
+      secao.style.display = 'block';
+      lista.innerHTML = data.arquivos.map(a => {
+        const ext = a.split('.').pop().toLowerCase();
+        const icone = ['jpg','jpeg','png','gif','webp'].includes(ext) ? '🖼' :
+                      ext === 'pdf' ? '📄' : ['mp3','m4a'].includes(ext) ? '🎵' : '📎';
+        return `<a href="${API}/api/anexo?arquivo=${encodeURIComponent(a)}" target="_blank"
+          style="font-family:'DM Mono',monospace; font-size:0.65rem; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:3px 8px; color:var(--text2); text-decoration:none; display:flex; align-items:center; gap:4px;">
+          ${icone} ${a}</a>`;
+      }).join('');
+    } catch(e) {}
+  }
+
+  async function salvarSessaoDetalhe() {
+    if (!registroAtual) return;
+    const novoId = document.getElementById('detalhe-sessao').value.trim();
+    const btn    = document.getElementById('detalhe-sessao-btn');
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+      const resp = await fetch(API + '/api/registro/sessao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ arquivo: registroAtual.arquivo, session_id: novoId })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        registroAtual.session_id = novoId;
+        toast('✓ Sessão atualizada', 'ok');
+      } else {
+        toast('Erro: ' + (data.erro || 'desconhecido'), 'erro');
+      }
+    } catch(e) {
+      console.error('salvarSessaoDetalhe erro:', e, 'arquivo:', registroAtual?.arquivo);
+      toast('Erro ao salvar sessão', 'erro');
+    } finally {
+      btn.textContent = 'salvar';
+      btn.disabled = false;
+    }
   }
 
   function fecharDetalhe() {

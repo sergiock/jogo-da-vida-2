@@ -251,6 +251,36 @@ class Handler(BaseHTTPRequestHandler):
             formato    = qs.get("formato",["json"])[0]
             self._json(self._exportar_sessao(session_id, formato))
 
+        elif path == "/api/anexos":
+            registro = qs.get("registro", [""])[0]
+            anexos_dir = OBSIDIAN / "anexos"
+            if not registro:
+                self._json({"arquivos": []})
+            else:
+                stem = registro.replace(".md", "")
+                arquivos = sorted(f.name for f in anexos_dir.glob(f"{stem}_*")) if anexos_dir.exists() else []
+                self._json({"arquivos": arquivos})
+
+        elif path.startswith("/api/anexo") and "upload" not in path:
+            arquivo = qs.get("arquivo", [""])[0]
+            if not arquivo or ".." in arquivo or "/" in arquivo:
+                self.send_response(404); self.end_headers(); return
+            caminho = OBSIDIAN / "anexos" / arquivo
+            if not caminho.exists():
+                self.send_response(404); self.end_headers(); return
+            ext = caminho.suffix.lower()
+            tipos = {".pdf":"application/pdf",".jpg":"image/jpeg",".jpeg":"image/jpeg",
+                     ".png":"image/png",".gif":"image/gif",".webp":"image/webp",
+                     ".mp3":"audio/mpeg",".m4a":"audio/mp4",".txt":"text/plain",".md":"text/plain"}
+            ct = tipos.get(ext, "application/octet-stream")
+            conteudo = caminho.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", ct)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(conteudo)
+            return
+
         elif path == "/api/consultas":
             ref = qs.get("ref",[""])[0]
             lista = []
@@ -395,16 +425,21 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── POST ──────────────────────────────────────────────────────────────────
     def do_POST(self):
+        path = urlparse(self.path).path
         length = int(self.headers.get('Content-Length', 0))
         body   = self.rfile.read(length)
+
+        # Upload de arquivo (multipart)
+        if path == '/api/anexo/upload':
+            self._json(self._upload_anexo(body, self.headers))
+            return
+
         try:
             dados = json.loads(body.decode('utf-8'))
         except Exception:
             self.send_response(400)
             self.end_headers()
             return
-
-        path = urlparse(self.path).path
 
         # ── Especificador POSTs ───────────────────────────────────────────────
         if path == "/api/registro/salvar":
@@ -436,6 +471,12 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/api/excluir":
             self._json(self._excluir_nota(dados))
+
+        elif path == "/api/registro/sessao":
+            self._json(self._atualizar_sessao(dados))
+
+        elif path == "/api/sessao/gerar":
+            self._json(self._gerar_arquivo_sessao(dados))
 
         # ── Cores POSTs ───────────────────────────────────────────────────────
         elif path == '/api/evento/salvar':
@@ -638,6 +679,217 @@ session_id: {session_id}
         arquivo.parent.mkdir(parents=True, exist_ok=True)
         arquivo.write_text(conteudo, encoding='utf-8')
         return {'ok': True}
+
+    def _upload_anexo(self, body, headers):
+        """Recebe multipart/form-data com 'file' e 'registro', salva em obsidian/anexos/."""
+        import email
+        from email import policy as epolicy
+        ct = headers.get('Content-Type', '')
+        if 'boundary=' not in ct:
+            return {'ok': False, 'erro': 'Content-Type inválido'}
+        boundary = ct.split('boundary=')[-1].strip()
+        # Parse manual do multipart
+        sep = ('--' + boundary).encode()
+        partes = body.split(sep)
+        nome_arquivo = None
+        conteudo_arquivo = None
+        registro = ''
+        for parte in partes:
+            if b'Content-Disposition' not in parte:
+                continue
+            header_end = parte.find(b'\r\n\r\n')
+            if header_end == -1:
+                continue
+            header_bytes = parte[:header_end]
+            data_bytes   = parte[header_end+4:].rstrip(b'\r\n--')
+            header_str   = header_bytes.decode('utf-8', errors='ignore')
+            if 'name="registro"' in header_str:
+                registro = data_bytes.decode('utf-8', errors='ignore').strip()
+            elif 'name="file"' in header_str:
+                m = re.search(r'filename="([^"]+)"', header_str)
+                if m:
+                    nome_arquivo   = m.group(1)
+                    conteudo_arquivo = data_bytes
+        if not nome_arquivo or conteudo_arquivo is None:
+            return {'ok': False, 'erro': 'arquivo não recebido'}
+        # Prefixo com stem do registro para associação
+        stem = registro.replace('.md', '') if registro else 'avulso'
+        # Sanitiza nome
+        nome_seguro = re.sub(r'[^\w.\-]', '_', nome_arquivo)
+        nome_final  = f"{stem}_{nome_seguro}"
+        anexos_dir  = OBSIDIAN / 'anexos'
+        anexos_dir.mkdir(parents=True, exist_ok=True)
+        destino = anexos_dir / nome_final
+        destino.write_bytes(conteudo_arquivo)
+        print(f"  ✅ Anexo salvo: anexos/{nome_final}")
+        # Adiciona link no .md do registro
+        if registro:
+            arq_reg = REGISTROS / registro
+            if arq_reg.exists():
+                texto = arq_reg.read_text(encoding='utf-8')
+                link  = f"![[anexos/{nome_final}]]"
+                if '## Anexos' in texto:
+                    texto = texto.replace('## Anexos\n', f'## Anexos\n{link}\n')
+                else:
+                    texto += f'\n\n## Anexos\n{link}\n'
+                arq_reg.write_text(texto, encoding='utf-8')
+        return {'ok': True, 'arquivo': nome_final}
+
+    def _gerar_arquivo_sessao(self, dados):
+        """Gera e salva um .md completo com registros + consultas de uma sessão."""
+        session_id = dados.get('session_id', '').strip()
+        if not session_id:
+            return {'ok': False, 'erro': 'session_id não informado'}
+
+        agora = datetime.now()
+        hoje  = agora.strftime('%Y-%m-%d')
+        hora  = agora.strftime('%H:%M')
+
+        # Coleta registros
+        registros = []
+        for a in sorted(REGISTROS.glob('*.md')):
+            try:
+                conteudo = a.read_text(encoding='utf-8')
+                d = self._parse_registro(conteudo)
+                if d.get('session_id') == session_id:
+                    d['arquivo'] = a.name
+                    d['conteudo_raw'] = conteudo
+                    registros.append(d)
+            except: pass
+
+        # Coleta consultas com conteúdo completo
+        consultas = []
+        for a in sorted(CONSULTAS.glob('*.md')):
+            try:
+                conteudo = a.read_text(encoding='utf-8')
+                if session_id not in conteudo:
+                    continue
+                d = {'arquivo': a.name, 'pergunta': '', 'resposta': '', 'servico': '', 'data': '', 'hora': ''}
+                secao = None
+                linhas_secao = []
+                for linha in conteudo.splitlines():
+                    for campo in ['servico', 'data', 'hora', 'session_id']:
+                        if linha.startswith(campo + ':'):
+                            d[campo] = linha.split(':', 1)[1].strip()
+                    if linha == '## Pergunta':
+                        if secao: d[secao] = '\n'.join(linhas_secao).strip()
+                        secao = 'pergunta'; linhas_secao = []
+                    elif linha == '## Resposta':
+                        if secao: d[secao] = '\n'.join(linhas_secao).strip()
+                        secao = 'resposta'; linhas_secao = []
+                    elif secao and not linha.startswith('##') and not linha.startswith('---'):
+                        linhas_secao.append(linha)
+                if secao: d[secao] = '\n'.join(linhas_secao).strip()
+                if d.get('session_id') == session_id:
+                    consultas.append(d)
+            except: pass
+
+        if not registros and not consultas:
+            return {'ok': False, 'erro': f'Nenhum conteúdo encontrado para sessão: {session_id}'}
+
+        # Monta o documento
+        linhas = [
+            f'---',
+            f'tags: [sessao, exportacao]',
+            f'session_id: {session_id}',
+            f'data_export: {hoje}',
+            f'hora_export: {hora}',
+            f'total_registros: {len(registros)}',
+            f'total_consultas: {len(consultas)}',
+            f'---',
+            f'',
+            f'# Sessão: {session_id}',
+            f'',
+            f'> Exportado em {hoje} às {hora}  ',
+            f'> {len(registros)} registro(s) · {len(consultas)} consulta(s)',
+            f'',
+            f'---',
+            f'',
+        ]
+
+        for r in registros:
+            linhas += [
+                f'## Registro — {r.get("data","")} {r.get("hora","")}',
+                f'**Título:** {r.get("titulo","—")}  ',
+                f'**Fase:** {r.get("fase","—")} · **Jogo:** {r.get("jogo","—")}',
+                f'',
+            ]
+            if r.get('agora'):
+                linhas += [f'### Como estava', r['agora'], '']
+            if r.get('foco'):
+                linhas += [f'### Foco', r['foco'], '']
+            if r.get('reflexao'):
+                linhas += [f'### Reflexão', r['reflexao'], '']
+            linhas.append('---')
+            linhas.append('')
+
+        for c in consultas:
+            linhas += [
+                f'## Consulta {c.get("servico","").title()} — {c.get("data","")} {c.get("hora","")}',
+                f'',
+            ]
+            if c.get('pergunta'):
+                linhas += [f'**Pergunta:**', c['pergunta'], '']
+            if c.get('resposta'):
+                linhas += [f'**Resposta:**', c['resposta'], '']
+            linhas.append('---')
+            linhas.append('')
+
+        conteudo_final = '\n'.join(linhas)
+
+        # Salva em especificador/obsidian/sessoes/
+        sessoes_dir = OBSIDIAN / 'sessoes'
+        sessoes_dir.mkdir(parents=True, exist_ok=True)
+        slug = re.sub(r'[^a-z0-9-]', '-', session_id.lower())[:50]
+        nome_arquivo = f'{hoje}-{slug}.md'
+        caminho = sessoes_dir / nome_arquivo
+        caminho.write_text(conteudo_final, encoding='utf-8')
+        print(f'  ✅ Sessão exportada: sessoes/{nome_arquivo}')
+
+        return {
+            'ok': True,
+            'arquivo': f'sessoes/{nome_arquivo}',
+            'total_registros': len(registros),
+            'total_consultas': len(consultas),
+            'texto': conteudo_final
+        }
+
+    def _atualizar_sessao(self, dados):
+        arquivo = dados.get('arquivo', '')
+        novo_id = dados.get('session_id', '').strip()
+        if not arquivo or '..' in arquivo or '/' in arquivo:
+            return {'ok': False, 'erro': 'arquivo inválido'}
+        caminho = REGISTROS / arquivo
+        if not caminho.exists():
+            return {'ok': False, 'erro': 'arquivo não encontrado'}
+
+        # Atualiza o registro
+        conteudo = caminho.read_text(encoding='utf-8')
+        if re.search(r'^session_id:', conteudo, re.MULTILINE):
+            conteudo = re.sub(r'^session_id:.*$', f'session_id: {novo_id}', conteudo, flags=re.MULTILINE)
+        else:
+            conteudo = conteudo.replace('---\n\n#', f'session_id: {novo_id}\n---\n\n#', 1)
+        caminho.write_text(conteudo, encoding='utf-8')
+        print(f"  ✅ Sessão atualizada: {arquivo} → {novo_id}")
+
+        # Propaga para consultas associadas (registro_origem == arquivo)
+        consultas_atualizadas = 0
+        nome_sem_ext = arquivo.replace('.md', '')
+        for c in CONSULTAS.glob('*.md'):
+            try:
+                texto = c.read_text(encoding='utf-8')
+                if f'registro_origem: {arquivo}' not in texto and f'registro_origem: {nome_sem_ext}' not in texto:
+                    continue
+                if re.search(r'^session_id:', texto, re.MULTILINE):
+                    texto = re.sub(r'^session_id:.*$', f'session_id: {novo_id}', texto, flags=re.MULTILINE)
+                else:
+                    texto = texto.replace('---\n\n#', f'session_id: {novo_id}\n---\n\n#', 1)
+                c.write_text(texto, encoding='utf-8')
+                consultas_atualizadas += 1
+                print(f"  ✅ Consulta propagada: {c.name} → {novo_id}")
+            except: pass
+
+        return {'ok': True, 'arquivo': arquivo, 'session_id': novo_id, 'consultas_atualizadas': consultas_atualizadas}
 
     def _excluir_nota(self, dados):
         tipo    = dados.get('tipo','')

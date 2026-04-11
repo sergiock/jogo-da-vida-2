@@ -12,8 +12,8 @@ registro_origem: 2026-03-20-0137-o-jogo-da-vida-efetivamente-comeca-e-ter.md
 # 2026-03-20-0137-o-jogo-da-vida-efetivamente-comeca-e-ter · Claude · 20/03/2026 01:44
 
 > Origem: [[registros/2026-03-20-0137-o-jogo-da-vida-efetivamente-comeca-e-ter.md]]
-> Sessão: o jogo da vida efetivamente começa, e termina
-> Fase: #fase/fogo
+> Sessão: reconhecendo o outro
+> Fase: #fase/terra 
 > Jogo: #jogo/01
 
 ## Pergunta

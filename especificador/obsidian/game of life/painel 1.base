@@ -1,0 +1,59 @@
+views:
+  - type: table
+    name: Tudo por data
+    filters:
+      and:
+        - "!file.tags.isEmpty()"
+        - file.tags.contains("registro") || file.tags.contains("consulta")
+    order:
+      - file.name
+      - data
+      - hora
+      - fase
+      - session_id
+    sort:
+      - property: data
+        direction: DESC
+      - property: hora
+        direction: DESC
+  - type: table
+    name: Por fase — Ar
+    filters:
+      and:
+        - file.tags.contains("fase/ar")
+    order:
+      - file.name
+      - data
+      - hora
+      - session_id
+    sort:
+      - property: data
+        direction: DESC
+  - type: table
+    name: Por fase — Fogo
+    filters:
+      and:
+        - file.tags.contains("fase/fogo")
+    order:
+      - file.name
+      - data
+      - hora
+      - session_id
+    sort:
+      - property: data
+        direction: DESC
+  - type: table
+    name: Com sessão
+    filters:
+      and:
+        - "!session_id.isEmpty()"
+    order:
+      - session_id
+      - data
+      - hora
+      - file.name
+    sort:
+      - property: session_id
+        direction: ASC
+      - property: data
+        direction: ASC

@@ -1,0 +1,19 @@
+views:
+  - type: table
+    name: Registros
+    filters:
+      and:
+        - file.tags.contains("registro")
+    order:
+      - file.name
+      - data
+      - hora
+      - titulo
+      - fase
+      - jogo_ativo
+      - session_id
+    sort:
+      - property: data
+        direction: DESC
+      - property: hora
+        direction: DESC

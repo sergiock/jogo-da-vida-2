@@ -1,5 +1,9 @@
-This is your new *vault*.
+ligando github no obsidian
+
 
 Make a note of something, [[create a link]], or try [the Importer](https://help.obsidian.md/Plugins/Importer)!
 
-When you're ready, delete this note and make the vault your own.
+
+
+
+https://github.com/sergiock/jogo-da-vida-2/blob/main/especificador/obsidian/consultas/2026-03-18-1513-consulta-notebooklm.md

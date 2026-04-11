@@ -3,7 +3,7 @@ tags: [registro, ciclo/dia]
 data: 2026-03-20
 hora: 15:44
 titulo: a simplididade das regras
-session_id: a simplididade das regras
+session_id: reconhecendo o outro
 fase: terra
 jogo_ativo: 09-interfacevirtual
 ---

@@ -18,6 +18,7 @@ registro_origem: 2026-04-08.md
 C - base, F-base,  G - dominante, C- oitava abaixo /acima => ondas portadoras, frequencias, canais de inteligencia
 facilidades operacionais para utilizar os dois sistemas, de maneira transparente
 
+![[https://github.com/sergiock]]
 ## Resposta
 F lê o documento. F lê o contexto.
 

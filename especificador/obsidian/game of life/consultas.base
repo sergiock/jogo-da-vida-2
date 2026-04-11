@@ -1,0 +1,47 @@
+views:
+  - type: table
+    name: Todas as consultas
+    filters:
+      and:
+        - file.tags.contains("consulta")
+    order:
+      - file.name
+      - data
+      - hora
+      - servico
+      - fase
+      - session_id
+      - registro_origem
+    sort:
+      - property: data
+        direction: DESC
+      - property: hora
+        direction: DESC
+  - type: table
+    name: Claude
+    filters:
+      and:
+        - file.tags.contains("consulta/claude")
+    order:
+      - file.name
+      - data
+      - hora
+      - session_id
+      - registro_origem
+    sort:
+      - property: data
+        direction: DESC
+  - type: table
+    name: NotebookLM
+    filters:
+      and:
+        - file.tags.contains("consulta/notebooklm")
+    order:
+      - file.name
+      - data
+      - hora
+      - session_id
+      - registro_origem
+    sort:
+      - property: data
+        direction: DESC
