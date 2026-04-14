@@ -1,0 +1,17 @@
+views:
+  - type: table
+    name: Sessões exportadas
+    filters:
+      and:
+        - file.tags.contains("sessao")
+    order:
+      - data_export
+      - hora_export
+      - session_id
+      - total_registros
+      - total_consultas
+    sort:
+      - property: data_export
+        direction: DESC
+      - property: hora_export
+        direction: DESC

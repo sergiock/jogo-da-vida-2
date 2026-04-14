@@ -659,7 +659,9 @@ session_id: {session_id}
 {reflexao or '_não preenchido_'}
 """
         REGISTROS.mkdir(parents=True, exist_ok=True)
-        arquivo = REGISTROS / f"{hoje}.md"
+        hora_slug  = agora_dt.strftime('%H%M')
+        titulo_slug = re.sub(r'[^\w]', '-', titulo.lower())[:40].strip('-')
+        arquivo = REGISTROS / f"{hoje}-{hora_slug}-{titulo_slug}.md"
         arquivo.write_text(conteudo, encoding='utf-8')
         print(f"  ✅ Registro salvo: {arquivo.name}")
         return {'ok': True, 'arquivo': arquivo.name}
