@@ -110,13 +110,50 @@ Para múltiplos colaboradores: `servidor hospedado → vault compartilhado → g
 **Decisão:** vault aberto.
 
 Cada colaborador numa pasta própria. Síntese periódica por Sergio.
-Próximo passo: implementar commit automático + campo autor + estrutura de pastas.
+
+---
+
+## Implementação: commit automático + campo autor
+
+**Mudanças em `servidor_unico.py`:**
+
+- Função `_git_commit(arquivos, mensagem)` — git add + commit + push automático
+- Função `_pasta_colaborador(autor)` — retorna `registros/` para Sergio, `colaboradores/{autor}/registros/` para outros
+- Campo `autor` nos registros — tag `autor/{nome}` no frontmatter
+- `_salvar_registro` e `_salvar_consulta` chamam `_git_commit` após cada save
+
+**Quando `GITHUB_TOKEN` disponível:** push automático para `main` após cada commit.
+
+---
+
+## Preparação para deploy
+
+**Mudanças para produção:**
+- `BASE` via `APP_BASE` (env var) — configurável sem alterar código
+- `PORT` via `PORT` (env var) — Railway injeta automaticamente
+- Bind em `0.0.0.0` quando `APP_BASE` definido (necessário em cloud)
+- `Procfile` criado: `web: python3 dev/python/servidor_unico.py`
+
+**Fluxo em produção:**
+```
+colaborador → servidor Railway → git commit → git push → GitHub → Sergio faz pull
+```
+
+**Variáveis de ambiente necessárias no Railway:**
+- `APP_BASE` = `/app`
+- `GITHUB_TOKEN` = Personal Access Token (scope: repo)
+- `GIT_USER_NAME` = `Canal 17`
+- `GIT_USER_EMAIL` = `canal17@jogo-da-vida.app`
+
+**Commit publicado:** `7308f66` — `sergiock/jogo-da-vida-2`
+
+**Próximo passo:** deploy no Railway (conectar repo → definir variáveis → URL pública).
 
 ---
 
 ## Estado ao fechar
 
-- Servidor rodando em localhost:8080
-- canal17/ com 3 posts de síntese
-- GitHub atualizado
-- Arquitetura multi-colaborador: definida, não implementada
+- Servidor rodando em localhost:8080 (commit automático ativo, push local sem token)
+- canal17/ com 3 posts de síntese + este log
+- GitHub atualizado (commit `7308f66`)
+- Arquitetura multi-colaborador: implementada localmente, aguardando deploy
