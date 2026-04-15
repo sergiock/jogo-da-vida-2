@@ -1104,6 +1104,10 @@
         <span class="sessao-label">sessão</span>
         <input id="registro-sessao" type="text" placeholder="nome da sessão (agrupa registro + consultas)..." autocomplete="off">
       </div>
+      <div class="registro-sessao-wrap">
+        <span class="sessao-label">autor</span>
+        <input id="registro-autor" type="text" placeholder="seu nome (deixe em branco para sergio)..." autocomplete="off">
+      </div>
       <div class="registro-tabs">
         <div class="registro-tab ativo" onclick="trocarTab(this, 'agora')">Agora</div>
         <div class="registro-tab" onclick="trocarTab(this, 'foco')">Foco</div>
@@ -1660,6 +1664,7 @@
     const dados = {
       titulo:     document.getElementById('registro-titulo').value,
       session_id: document.getElementById('registro-sessao').value.trim(),
+      autor:      document.getElementById('registro-autor').value.trim(),
       agora:      document.querySelector('#tab-agora textarea').value,
       foco:       document.querySelector('#tab-foco textarea').value,
       reflexao:   document.querySelector('#tab-reflexao textarea').value,
