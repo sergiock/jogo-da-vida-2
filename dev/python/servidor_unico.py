@@ -27,19 +27,54 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 # ── Caminhos ──────────────────────────────────────────────────────────────────
-BASE     = Path.home() / "Documents/actualsc/jogo-da-vida"
+BASE     = Path(os.environ.get('APP_BASE', str(Path.home() / "Documents/actualsc/jogo-da-vida")))
 OBSIDIAN = BASE / "especificador/obsidian"
 REGISTROS  = OBSIDIAN / "registros"
 CONSULTAS  = OBSIDIAN / "consultas"
 TEMAS      = OBSIDIAN / "temas"
 EVENTOS    = OBSIDIAN / "eventos"
 STATUS     = OBSIDIAN / "status.json"
+AUTOR_DONO = "sergio"  # autor padrão quando não especificado
+
+
+def _pasta_colaborador(autor):
+    """Retorna o diretório de registros do colaborador (cria se necessário)."""
+    if not autor or autor == AUTOR_DONO:
+        return REGISTROS
+    pasta = OBSIDIAN / "colaboradores" / autor / "registros"
+    pasta.mkdir(parents=True, exist_ok=True)
+    return pasta
+
+
+def _git_commit(arquivos, mensagem):
+    """Faz git add + commit + push (se GITHUB_TOKEN disponível)."""
+    try:
+        git_user  = os.environ.get('GIT_USER_NAME',  'Canal 17')
+        git_email = os.environ.get('GIT_USER_EMAIL', 'canal17@jogo-da-vida.app')
+        subprocess.run(["git", "-C", str(BASE), "config", "user.name",  git_user],  capture_output=True)
+        subprocess.run(["git", "-C", str(BASE), "config", "user.email", git_email], capture_output=True)
+        subprocess.run(["git", "-C", str(BASE), "add"] + [str(a) for a in arquivos],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(BASE), "commit", "-m", mensagem],
+                       check=True, capture_output=True)
+        print(f"  ✅ git commit: {mensagem}")
+        token = os.environ.get('GITHUB_TOKEN')
+        if token:
+            result = subprocess.run(["git", "-C", str(BASE), "remote", "get-url", "origin"],
+                                    capture_output=True, text=True)
+            remote = result.stdout.strip()
+            auth_remote = remote.replace("https://", f"https://{token}@")
+            subprocess.run(["git", "-C", str(BASE), "push", auth_remote, "HEAD:main"],
+                           check=True, capture_output=True)
+            print(f"  ✅ git push: {mensagem}")
+    except subprocess.CalledProcessError as e:
+        print(f"  ⚠ git operação falhou: {e.stderr.decode()[:200]}")
 
 HTML_ESPECIFICADOR = BASE / "especificador/prototipos/Especificador.html"
 HTML_CORES         = BASE / "cores/prototipos/cores.html"
 HTML_CHATB         = BASE / "chatb/index.html"
 
-PORT = 8080
+PORT = int(os.environ.get('PORT', 8080))
 
 # ── APIs ──────────────────────────────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -622,6 +657,7 @@ class Handler(BaseHTTPRequestHandler):
         fase       = dados.get('fase','')
         jogo_ativo = dados.get('jogo_ativo','')
         session_id = dados.get('session_id','')
+        autor      = dados.get('autor','').strip() or AUTOR_DONO
 
         status = {}
         if STATUS.exists():
@@ -633,11 +669,13 @@ class Handler(BaseHTTPRequestHandler):
         tags = ['registro']
         if fase:       tags.append(f'fase/{fase}')
         if jogo_ativo: tags.append(f'jogo/{jogo_ativo[:2]}')
+        if autor != AUTOR_DONO: tags.append(f'autor/{autor}')
         tags_str = ', '.join(tags)
 
         conteudo = f"""---
 tags: [{tags_str}]
 titulo: {titulo}
+autor: {autor}
 data: {hoje}
 hora: {hora_br}
 fase: {fase}
@@ -647,7 +685,7 @@ session_id: {session_id}
 
 # {titulo}
 
-> {data_br} · {hora_br} · {fase} · {jogo_ativo}
+> {data_br} · {hora_br} · {fase} · {jogo_ativo} · {autor}
 
 ## Agora
 {agora_txt or '_não preenchido_'}
@@ -658,12 +696,13 @@ session_id: {session_id}
 ## Reflexão
 {reflexao or '_não preenchido_'}
 """
-        REGISTROS.mkdir(parents=True, exist_ok=True)
-        hora_slug  = agora_dt.strftime('%H%M')
+        pasta = _pasta_colaborador(autor)
+        hora_slug   = agora_dt.strftime('%H%M')
         titulo_slug = re.sub(r'[^\w]', '-', titulo.lower())[:40].strip('-')
-        arquivo = REGISTROS / f"{hoje}-{hora_slug}-{titulo_slug}.md"
+        arquivo = pasta / f"{hoje}-{hora_slug}-{titulo_slug}.md"
         arquivo.write_text(conteudo, encoding='utf-8')
-        print(f"  ✅ Registro salvo: {arquivo.name}")
+        print(f"  ✅ Registro salvo: {arquivo.name} (autor: {autor})")
+        _git_commit([arquivo], f"registro: {titulo[:50]} [{autor}]")
         return {'ok': True, 'arquivo': arquivo.name}
 
     def _salvar_status(self, dados):
@@ -1021,6 +1060,7 @@ registro_origem: {ref}
         CONSULTAS.mkdir(parents=True, exist_ok=True)
         (CONSULTAS / nome_arquivo).write_text(conteudo, encoding='utf-8')
         print(f"  ✅ Consulta salva: {nome_arquivo}")
+        arquivos_commit = [CONSULTAS / nome_arquivo]
         if ref:
             arq_reg = REGISTROS / ref
             if arq_reg.exists():
@@ -1031,6 +1071,8 @@ registro_origem: {ref}
                 else:
                     texto += f'\n\n## Consultas\n{link}\n'
                 arq_reg.write_text(texto, encoding='utf-8')
+                arquivos_commit.append(arq_reg)
+        _git_commit(arquivos_commit, f"consulta: {servico} — {titulo[:50]}")
         return {'ok': True, 'arquivo': nome_arquivo}
 
     def _carregar_matriz(self):
@@ -1452,4 +1494,5 @@ for d in [REGISTROS, CONSULTAS, EVENTOS, TEMAS]:
 print(f"  Ouvindo em http://localhost:{PORT}")
 print("  Ctrl+C para parar.\n")
 
-HTTPServer(('localhost', PORT), Handler).serve_forever()
+HOST = '0.0.0.0' if os.environ.get('APP_BASE') else 'localhost'
+HTTPServer((HOST, PORT), Handler).serve_forever()
