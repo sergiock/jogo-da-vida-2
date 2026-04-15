@@ -763,6 +763,7 @@ session_id: {session_id}
         destino = anexos_dir / nome_final
         destino.write_bytes(conteudo_arquivo)
         print(f"  ✅ Anexo salvo: anexos/{nome_final}")
+        arquivos_commit = [destino]
         # Adiciona link no .md do registro
         if registro:
             arq_reg = REGISTROS / registro
@@ -774,6 +775,8 @@ session_id: {session_id}
                 else:
                     texto += f'\n\n## Anexos\n{link}\n'
                 arq_reg.write_text(texto, encoding='utf-8')
+                arquivos_commit.append(arq_reg)
+        _git_commit(arquivos_commit, f"anexo: {nome_final}")
         return {'ok': True, 'arquivo': nome_final}
 
     def _gerar_arquivo_sessao(self, dados):
