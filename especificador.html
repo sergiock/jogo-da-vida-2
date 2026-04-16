@@ -1,0 +1,2793 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Especificador</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --bg2: #EFEDE6;
+    --surface: #FFFFFF;
+    --border: #DDD9CF;
+    --text: #1C1A16;
+    --text2: #6B6660;
+    --text3: #A09A92;
+    --accent: #2D5016;
+    --accent2: #8B4513;
+    --fogo: #C0392B;
+    --ar: #2980B9;
+    --agua: #1ABC9C;
+    --terra: #7D6608;
+    --eter: #6C3483;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 40px 0;
+    position: fixed;
+    top: 0; left: 0;
+  }
+
+  .logo {
+    padding: 0 28px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo h1 {
+    font-size: 1.1rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .logo span {
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+  }
+
+  nav {
+    padding: 28px 0;
+    flex: 1;
+  }
+
+  .nav-section {
+    margin-bottom: 28px;
+  }
+
+  .nav-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 28px;
+    margin-bottom: 8px;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 28px;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text2);
+    text-decoration: none;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  nav a:hover, nav a.ativo {
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  nav a.ativo {
+    border-left: 2px solid var(--accent);
+    padding-left: 26px;
+  }
+
+  .nav-icon { font-size: 0.9rem; }
+
+  .fase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 28px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .fase-fogo { background: #FDF0EE; color: var(--fogo); border: 1px solid #F5C6C1; }
+  .fase-ar   { background: #EEF4FD; color: var(--ar);   border: 1px solid #C1D8F5; }
+  .fase-agua { background: #EEF9F7; color: var(--agua); border: 1px solid #C1EDE7; }
+  .fase-terra{ background: #FDFAEE; color: var(--terra); border: 1px solid #F0E5A0; }
+  .fase-eter { background: #F5EEF9; color: var(--eter); border: 1px solid #DCC1F0; }
+
+  /* MAIN */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 60px;
+    max-width: 900px;
+  }
+
+  .page { display: none; }
+  .page.ativo { display: block; }
+
+  /* HEADER DA PÁGINA */
+  .page-header {
+    margin-bottom: 48px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-header .data {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .page-header h2 {
+    font-size: 2.8rem;
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  .page-header p {
+    margin-top: 12px;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text2);
+  }
+
+  /* CARDS GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px;
+  }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .card h3 {
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    font-size: 0.95rem;
+    color: var(--text2);
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* REGISTRO */
+  .registro-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .registro-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .registro-tab {
+    padding: 14px 24px;
+    font-size: 0.85rem;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .registro-tab.ativo {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .registro-campo {
+    display: none;
+    padding: 28px;
+  }
+
+  .registro-campo.ativo { display: block; }
+
+  .registro-campo label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .registro-campo textarea {
+    width: 100%;
+    min-height: 140px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    color: var(--text);
+    line-height: 1.7;
+    resize: none;
+  }
+
+  .registro-campo textarea::placeholder { color: var(--text3); font-style: italic; }
+
+  /* JOGOS */
+  .jogos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .jogo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .jogo-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  .jogo-card.ativo {
+    border-color: var(--accent);
+    background: #F0F5EC;
+  }
+
+  .jogo-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .jogo-nome {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .jogo-sub {
+    font-size: 0.8rem;
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  /* FASES */
+  .fases-lista { display: flex; flex-direction: column; gap: 16px; }
+
+  .fase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .fase-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+
+  .fase-icone {
+    font-size: 1.8rem;
+    line-height: 1;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .fase-info h3 { font-size: 1.3rem; font-weight: 400; margin-bottom: 6px; }
+  .fase-info p  { font-size: 0.9rem; color: var(--text2); font-style: italic; line-height: 1.5; }
+
+  .fase-status {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .fase-status.atual { background: #F0F5EC; color: var(--accent); border: 1px solid #C5DDB8; }
+  .fase-status.inativa { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
+
+  /* BOTÃO */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1e3a0e; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--text2); }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 20px; }
+
+  /* OBJETIVOS */
+  .objetivo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .objetivo-check {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+  }
+
+  .objetivo-check.feito { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .objetivo-texto { font-size: 1rem; color: var(--text); line-height: 1.5; }
+  .objetivo-texto.feito { color: var(--text3); text-decoration: line-through; }
+
+  .objetivo-frente {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text3);
+    margin-top: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* SEPARADOR */
+  .sep {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 32px 0 16px;
+    display: flex;
+    align-items: center;
+  }
+
+  .registro-titulo-wrap {
+    padding: 16px 28px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .registro-titulo-wrap input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--text);
+    padding-bottom: 12px;
+  }
+
+  .registro-titulo-wrap input::placeholder {
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  .registro-data-pipe {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text3);
+    white-space: nowrap;
+    padding-bottom: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  /* SESSÃO */
+  .registro-sessao-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    border-left: 2px solid var(--ar);
+  }
+
+  .sessao-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ar);
+    white-space: nowrap;
+  }
+
+  .registro-sessao-wrap input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text);
+    padding: 4px 0;
+  }
+
+  .registro-sessao-wrap input::placeholder { color: var(--text3); }
+  .registro-sessao-wrap.preenchido { border-left-color: var(--eter); }
+  .registro-sessao-wrap.preenchido .sessao-label { color: var(--eter); }
+
+  /* CONSULTAS ANTERIORES */
+  .consulta-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .consulta-item:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+  .consulta-item.expandido { border-left-color: var(--accent2); }
+
+  .consulta-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .consulta-servico {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  .consulta-servico.notebooklm { background: #F0F8FF; color: #1A6B8A; border: 1px solid #90C8E0; }
+  .consulta-servico.claude     { background: #F0F0FF; color: #4A4A9C; border: 1px solid #C0C0E8; }
+  .consulta-servico.gemini     { background: #FFF5EE; color: #B8621A; border: 1px solid #E8C090; }
+
+  .consulta-item-data {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  .consulta-item-pergunta {
+    font-size: 0.9rem;
+    color: var(--text2);
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+
+  .consulta-item-resposta {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .consulta-item.expandido .consulta-item-resposta { display: block; }
+
+  .consulta-item-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* CONSULTA IA */
+  .consulta-painel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+  }
+
+  .consulta-painel textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--bg);
+    resize: vertical;
+    outline: none;
+    margin-bottom: 16px;
+  }
+
+  .consulta-painel textarea::placeholder { color: var(--text3); font-style: italic; }
+
+  .consulta-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn-consulta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.15s;
+  }
+
+  .btn-claude     { background: #F0F0FF; color: #4A4A9C; border-color: #C0C0E8; }
+  .btn-claude:hover { background: #4A4A9C; color: #fff; }
+  .btn-gemini     { background: #FFF5EE; color: #B8621A; border-color: #E8C090; }
+  .btn-gemini:hover { background: #B8621A; color: #fff; }
+  .btn-notebooklm { background: #F0F8FF; color: #1A6B8A; border-color: #90C8E0; }
+  .btn-notebooklm:hover { background: #1A6B8A; color: #fff; }
+
+  .consulta-status {
+    margin-top: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  .consulta-status.erro { color: var(--fogo); }
+  .consulta-status.ok   { color: var(--accent); }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    opacity: 0;
+    transition: all 0.25s ease;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+
+  #toast.visivel {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #toast.ok   { background: var(--accent); color: #fff; }
+  #toast.erro { background: var(--fogo);   color: #fff; }
+
+  /* EXPORTAR SESSÃO */
+  .sessao-export-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+
+  .sessao-export-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .sessao-export-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .sessao-export-row input {
+    flex: 1;
+    min-width: 160px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    outline: none;
+  }
+
+  .sessao-export-btn {
+    padding: 8px 14px !important;
+    font-size: 0.7rem !important;
+    white-space: nowrap;
+  }
+
+  .export-jogos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .export-jogo-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text2);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.12s;
+  }
+
+  .export-jogo-btn:hover { border-color: var(--accent); color: var(--accent); background: #F0F5EC; }
+  .matriz-secao {
+    margin-bottom: 28px;
+  }
+
+  .matriz-secao-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .matriz-secao-titulo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .matriz-secao-desc {
+    font-size: 0.8rem;
+    color: var(--text3);
+    font-style: italic;
+    margin-left: auto;
+  }
+
+  .matriz-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: all 0.15s;
+  }
+
+  .matriz-item:hover { border-color: var(--accent); }
+
+  .matriz-item-check {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+  }
+
+  .matriz-item-check.feito { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .matriz-item-conteudo { flex: 1; }
+
+  .matriz-item-texto {
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.5;
+    outline: none;
+    min-height: 24px;
+  }
+
+  .matriz-item-texto.feito { color: var(--text3); text-decoration: line-through; }
+  .matriz-item-texto[contenteditable]:focus { border-bottom: 1px dashed var(--border); }
+
+  .matriz-item-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .matriz-item-remover {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .matriz-item:hover .matriz-item-remover { opacity: 1; }
+  .matriz-item-remover:hover { color: var(--fogo); }
+
+  .btn-add-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+
+  .btn-add-item:hover { border-color: var(--accent); color: var(--accent); }
+  .notas-controles { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+
+  .notas-timeline-item { display: grid; grid-template-columns: 80px 1fr; margin-bottom: 4px; }
+
+  .notas-timeline-lado { display: flex; flex-direction: column; align-items: center; padding-top: 18px; }
+
+  .notas-timeline-ponto {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--surface); flex-shrink: 0;
+  }
+  .notas-timeline-ponto.tipo-registro { border-color: var(--accent); background: var(--accent); }
+  .notas-timeline-ponto.tipo-consulta  { border-color: var(--ar);    background: var(--ar); }
+
+  .notas-timeline-linha { width: 2px; flex: 1; background: var(--border); margin-top: 4px; }
+
+  .notas-timeline-hora {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    color: var(--text3); margin-top: 4px; text-align: center;
+  }
+
+  .notas-timeline-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px 20px; margin: 8px 0;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .notas-timeline-card:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+  .card-tipo { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .card-tipo.registro { color: var(--accent); }
+  .card-tipo.consulta  { color: var(--ar); }
+
+  .notas-timeline-card .card-titulo  { font-size: 1rem; color: var(--text); margin-bottom: 4px; }
+  .notas-timeline-card .card-preview { font-size: 0.85rem; color: var(--text2); font-style: italic; line-height: 1.5; }
+  .notas-timeline-card .card-meta    { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+  .notas-data-sep {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text3);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 20px 0 8px 80px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+  }
+
+  .historico-filtros {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .historico-filtros select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .hist-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  .hist-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 22px 28px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .hist-item:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .hist-data {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text3);
+    padding-top: 4px;
+  }
+
+  .hist-data strong {
+    display: block;
+    font-size: 1.4rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .hist-preview {
+    font-size: 0.95rem;
+    color: var(--text2);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .hist-preview strong {
+    display: block;
+    font-style: normal;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .hist-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .hist-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.06em;
+  }
+
+  .badge-fase-fogo  { background: #FDF0EE; color: var(--fogo); border: 1px solid #F5C6C1; }
+  .badge-fase-ar    { background: #EEF4FD; color: var(--ar);   border: 1px solid #C1D8F5; }
+  .badge-fase-agua  { background: #EEF9F7; color: var(--agua); border: 1px solid #C1EDE7; }
+  .badge-fase-terra { background: #FDFAEE; color: var(--terra); border: 1px solid #F0E5A0; }
+  .badge-fase-eter  { background: #F5EEF9; color: var(--eter); border: 1px solid #DCC1F0; }
+  .badge-jogo       { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
+
+  .hist-vazio {
+    text-align: center;
+    padding: 60px;
+    color: var(--text3);
+    font-style: italic;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  /* DETALHE */
+  .detalhe-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .detalhe-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .detalhe-secao {
+    margin-bottom: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+  }
+
+  .detalhe-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .detalhe-texto {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text2);
+    font-style: italic;
+    white-space: pre-wrap;
+  }
+
+  /* ANIMAÇÃO */
+  .page.ativo { animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <h1>Especificador</h1>
+    <span>v.H · jogo da vida</span>
+  </div>
+
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a class="ativo" onclick="navegar('inicio', this)">
+        <span class="nav-icon">◎</span> Início
+      </a>
+      <a onclick="navegar('registro', this)">
+        <span class="nav-icon">✦</span> Registro do Dia
+      </a>
+      <a onclick="navegar('notas', this)">
+        <span class="nav-icon">≡</span> Todas as Notas
+      </a>
+      <a onclick="navegar('temas', this)">
+        <span class="nav-icon">◭</span> Temas
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a onclick="navegar('jogos', this)">
+        <span class="nav-icon">◈</span> Os 12 Jogos
+      </a>
+      <a onclick="navegar('fases', this)">
+        <span class="nav-icon">◐</span> Fases
+      </a>
+      <a onclick="navegar('objetivos', this)">
+        <span class="nav-icon">◇</span> Objetivos
+      </a>
+      <a onclick="navegar('matriz', this)">
+        <span class="nav-icon">⊞</span> Matriz
+      </a>
+    </div>
+  </nav>
+
+  <div>
+    <div class="nav-label" style="padding: 0 28px; margin-bottom: 10px;">Fase atual</div>
+    <div class="fase-badge fase-fogo">🔥 Fogo</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- INÍCIO -->
+  <div class="page ativo" id="page-inicio">
+    <div class="page-header">
+      <div class="data" id="data-hoje"></div>
+      <h2>Bom dia,<br>Sergio.</h2>
+      <p>Como está o piloto da mente hoje?</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card" id="card-fase" onclick="navegar('fases')" style="cursor:pointer">
+        <div class="card-label">Fase atual</div>
+        <h3>🔥 Fogo</h3>
+        <p>Urgência e salto — reconhecer a dependência, decidir mudar de padrão.</p>
+      </div>
+      <div class="card" id="card-jogo" onclick="navegar('jogos')" style="cursor:pointer">
+        <div class="card-label">Jogo ativo</div>
+        <h3>◈ Estratégia</h3>
+        <p>Causa e consequência — gestão de recursos para atingir objetivos a longo prazo.</p>
+      </div>
+    </div>
+
+    <div class="sep">
+      Registro de hoje
+      <button class="btn btn-outline" style="margin-left:auto; padding:4px 12px; font-size:0.65rem;" onclick="novoRegistro()">+ Novo</button>
+    </div>
+
+    <div class="registro-area">
+      <div class="registro-titulo-wrap">
+        <input id="registro-titulo" type="text" placeholder="Título do registro (opcional)..." autocomplete="off">
+        <span id="registro-data-display" class="registro-data-pipe"></span>
+      </div>
+      <div class="registro-sessao-wrap">
+        <span class="sessao-label">sessão</span>
+        <input id="registro-sessao" type="text" placeholder="nome da sessão (agrupa registro + consultas)..." autocomplete="off">
+      </div>
+      <div class="registro-sessao-wrap">
+        <span class="sessao-label">autor</span>
+        <input id="registro-autor" type="text" placeholder="seu nome (deixe em branco para sergio)..." autocomplete="off">
+      </div>
+      <div class="registro-tabs">
+        <div class="registro-tab ativo" onclick="trocarTab(this, 'agora')">Agora</div>
+        <div class="registro-tab" onclick="trocarTab(this, 'foco')">Foco</div>
+        <div class="registro-tab" onclick="trocarTab(this, 'reflexao')">Reflexão</div>
+      </div>
+      <div class="registro-campo ativo" id="tab-agora">
+        <label>Como estou agora</label>
+        <textarea placeholder="Estado do corpo e da mente neste momento..."></textarea>
+      </div>
+      <div class="registro-campo" id="tab-foco">
+        <label>Foco do dia</label>
+        <textarea placeholder="O que estou perseguindo hoje..."></textarea>
+      </div>
+      <div class="registro-campo" id="tab-reflexao">
+        <label>Reflexão</label>
+        <textarea placeholder="Aprendizado do dia..."></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button id="btn-salvar" class="btn btn-primary" onclick="salvarRegistro()">✦ Salvar registro</button>
+      <button class="btn btn-outline" onclick="navegar('registro', null)">Ver histórico</button>
+    </div>
+
+    <!-- Anexos no registro novo -->
+    <div id="anexos-novo-wrap" style="display:none; margin-top:12px;">
+      <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px;">Anexos</div>
+      <div id="anexos-novo-lista" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+    </div>
+    <div class="btn-row" style="margin-top:6px;">
+      <label class="btn btn-outline" style="cursor:pointer; font-size:0.7rem; padding:5px 12px;">
+        ⊕ Anexar arquivo
+        <input type="file" id="anexo-novo-input" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.mp3,.m4a,.txt,.md" style="display:none" onchange="previewAnexosNovo(this)">
+      </label>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div class="page" id="page-registro">
+    <div class="page-header">
+      <div class="data">Histórico</div>
+      <h2>Registros</h2>
+      <p>A memória do piloto da mente.</p>
+    </div>
+
+    <!-- Exportar sessão como JSON -->
+    <div class="sessao-export-panel">
+      <div class="sessao-export-label">Exportar sessão para chat</div>
+      <div class="sessao-export-row">
+        <input id="export-session-id" type="text" placeholder="session_id..." autocomplete="off" list="sessoes-disponiveis">
+        <datalist id="sessoes-disponiveis"></datalist>
+        <button class="btn btn-outline sessao-export-btn" onclick="exportarSessao()">⊞ Gerar JSON</button>
+        <button class="btn btn-outline sessao-export-btn" onclick="exportarSessaoTexto()">✦ Copiar texto</button>
+        <button class="btn btn-outline sessao-export-btn" onclick="gerarArquivoSessao()" style="border-color:var(--eter); color:var(--eter);">◈ Salvar arquivo</button>
+      </div>
+      <div id="export-status" style="display:none; font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--text3); margin-top:8px;"></div>
+      <!-- Seletor dos 12 jogos/chats -->
+      <div id="export-jogos" style="display:none; margin-top:10px;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px;">Enviar para qual chat</div>
+        <div class="export-jogos-grid" id="export-jogos-grid"></div>
+      </div>
+    </div>
+
+    <div class="historico-filtros">
+      <select id="filtro-fase">
+        <option value="">Todas as fases</option>
+        <option value="fogo">🔥 Fogo</option>
+        <option value="ar">💨 Ar</option>
+        <option value="agua">💧 Água</option>
+        <option value="terra">🌱 Terra</option>
+        <option value="eter">✨ Éter</option>
+      </select>
+      <select id="filtro-jogo">
+        <option value="">Todos os jogos</option>
+        <option value="01">01 · Caça</option>
+        <option value="02">02 · Guerra</option>
+        <option value="03">03 · Superação</option>
+        <option value="04">04 · Sedução</option>
+        <option value="05">05 · Estratégia</option>
+        <option value="06">06 · Oráculo</option>
+        <option value="07">07 · Vício</option>
+        <option value="08">08 · Brincadeira</option>
+        <option value="09">09 · Play</option>
+        <option value="10">10 · Projeção</option>
+        <option value="11">11 · Simulação</option>
+        <option value="12">12 · Antecipação</option>
+      </select>
+      <span id="historico-contagem" class="hist-count"></span>
+    </div>
+
+    <div id="historico-lista">
+      <div class="card" style="text-align:center; padding: 48px; color: var(--text3); font-style: italic;">
+        Carregando registros...
+      </div>
+    </div>
+
+    <!-- DETALHE DO REGISTRO -->
+    <div id="historico-detalhe" style="display:none;">
+      <div class="detalhe-header">
+        <button class="btn btn-outline" onclick="fecharDetalhe()">← Voltar</button>
+        <span id="detalhe-data" style="font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--text3);"></span>
+        <button class="btn btn-outline" style="margin-left:auto; color:var(--fogo); border-color:var(--fogo);" onclick="excluirNota('registro')">🗑 Excluir registro</button>
+      </div>
+      <div class="detalhe-badges" id="detalhe-badges"></div>
+
+      <!-- Sessão editável -->
+      <div class="registro-sessao-wrap" id="detalhe-sessao-wrap" style="margin-bottom:0; border-radius:0;">
+        <span class="sessao-label">sessão</span>
+        <input id="detalhe-sessao" type="text" placeholder="definir session_id..." autocomplete="off">
+        <button class="btn btn-outline" id="detalhe-sessao-btn" onclick="salvarSessaoDetalhe()" style="padding:3px 10px; font-size:0.65rem; flex-shrink:0;">salvar</button>
+      </div>
+
+      <div class="detalhe-secao">
+        <div class="detalhe-label">Como estava</div>
+        <div class="detalhe-texto" id="detalhe-agora"></div>
+      </div>
+      <div class="detalhe-secao">
+        <div class="detalhe-label">Foco do dia</div>
+        <div class="detalhe-texto" id="detalhe-foco"></div>
+      </div>
+      <div class="detalhe-secao">
+        <div class="detalhe-label">Reflexão</div>
+        <div class="detalhe-texto" id="detalhe-reflexao"></div>
+      </div>
+
+      <!-- Anexos no detalhe -->
+      <div class="detalhe-secao" id="detalhe-anexos-secao" style="display:none;">
+        <div class="detalhe-label">Anexos</div>
+        <div id="detalhe-anexos-lista" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="btn btn-outline" style="cursor:pointer; font-size:0.7rem; padding:5px 12px;">
+          ⊕ Anexar arquivo
+          <input type="file" id="anexo-detalhe-input" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.mp3,.m4a,.txt,.md" style="display:none" onchange="uploadAnexosDetalhe(this)">
+        </label>
+      </div>
+
+      <!-- CONSULTAS ANTERIORES -->
+      <div id="consultas-anteriores" style="display:none;">
+        <div class="sep">Consultas anteriores</div>
+        <div id="consultas-lista"></div>
+      </div>
+      <div class="sep">Consultar IA</div>
+      <div class="consulta-painel">
+        <textarea id="consulta-pergunta" placeholder="Pergunta adicional (opcional) — se vazio usa prompt padrão sobre o jogo da vida..."></textarea>
+        <div class="consulta-btns">
+          <button class="btn btn-consulta btn-claude" onclick="consultarIA('claude')">
+            ✦ Claude
+          </button>
+          <button class="btn btn-consulta btn-gemini" onclick="consultarIA('gemini')">
+            ◆ Gemini
+          </button>
+          <button class="btn btn-consulta btn-notebooklm" onclick="consultarNotebookLM()">
+            ⊕ NotebookLM
+          </button>
+        </div>
+        <div id="consulta-status" class="consulta-status" style="display:none;"></div>
+
+        <!-- Campo para colar respostas — permanece aberto para múltiplas -->
+        <div id="notebooklm-wrap" style="display:none; margin-top:20px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <div class="detalhe-label" style="margin:0;">Cole a resposta de <span id="servico-label" style="color:var(--text2);">...</span></div>
+            <span id="sessao-contador" style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text3); margin-left:auto;"></span>
+          </div>
+          <textarea id="notebooklm-resposta" placeholder="Cole a resposta aqui..." style="min-height:140px;"></textarea>
+          <div class="btn-row" style="margin-top:12px;">
+            <button class="btn btn-primary" onclick="salvarRespostaNotebookLM()">✦ Salvar e continuar</button>
+            <button class="btn btn-outline" onclick="fecharNotebookLM()">Encerrar sessão</button>
+          </div>
+        </div>
+
+        <!-- Respostas salvas nesta sessão -->
+        <div id="sessao-respostas" style="display:none; margin-top:20px;">
+          <div class="detalhe-label">Respostas desta sessão</div>
+          <div id="sessao-respostas-lista"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOGOS -->
+  <div class="page" id="page-jogos">
+    <div class="page-header">
+      <div class="data">Sistema</div>
+      <h2>Os 12 Jogos</h2>
+      <p>Qual lógica está dominando este momento?</p>
+    </div>
+
+    <div class="jogos-grid">
+      <div class="jogo-card ativo" onclick="selecionarJogo(this)">
+        <div class="jogo-num">01</div>
+        <div class="jogo-nome">O Jogo como Caça</div>
+        <div class="jogo-sub">Animal / Game</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">02</div>
+        <div class="jogo-nome">O Jogo como Guerra</div>
+        <div class="jogo-sub">Guerreiro / Conquista</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">03</div>
+        <div class="jogo-nome">O Jogo como Superação</div>
+        <div class="jogo-sub">Capacidades do Corpo</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">04</div>
+        <div class="jogo-nome">O Jogo como Sedução</div>
+        <div class="jogo-sub">Sensualidade / Contato</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">05</div>
+        <div class="jogo-nome">O Jogo como Estratégia</div>
+        <div class="jogo-sub">Evolução / Xadrez</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">06</div>
+        <div class="jogo-nome">O Jogo como Oráculo</div>
+        <div class="jogo-sub">Leitura Arquetípica</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">07</div>
+        <div class="jogo-nome">O Jogo como Vício</div>
+        <div class="jogo-sub">Aposta / Gambling</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">08</div>
+        <div class="jogo-nome">O Jogo como Brincadeira</div>
+        <div class="jogo-sub">Child's Play / Paidia</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">09</div>
+        <div class="jogo-nome">O Jogo como Play</div>
+        <div class="jogo-sub">Interface / Virtual</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">10</div>
+        <div class="jogo-nome">O Jogo como Projeção</div>
+        <div class="jogo-sub">Filme / Espetáculo</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">11</div>
+        <div class="jogo-nome">O Jogo como Simulação</div>
+        <div class="jogo-sub">Laboratório de Realidade</div>
+      </div>
+      <div class="jogo-card" onclick="selecionarJogo(this)">
+        <div class="jogo-num">12</div>
+        <div class="jogo-nome">O Jogo como Antecipação</div>
+        <div class="jogo-sub">Movimentos Futuros</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASES -->
+  <div class="page" id="page-fases">
+    <div class="page-header">
+      <div class="data">Sistema</div>
+      <h2>Fases</h2>
+      <p>A jornada de reconquista da lucidez.</p>
+    </div>
+
+    <div class="fases-lista">
+      <div class="fase-card" onclick="selecionarFase(this)">
+        <div class="fase-icone">🔥</div>
+        <div class="fase-info">
+          <h3>Fogo</h3>
+          <p>Urgência e salto — reconhecer a dependência, decidir mudar de padrão, boot no jogo da vida.</p>
+        </div>
+        <div class="fase-status atual">Fase atual</div>
+      </div>
+      <div class="fase-card" onclick="selecionarFase(this)">
+        <div class="fase-icone">💨</div>
+        <div class="fase-info">
+          <h3>Ar</h3>
+          <p>Estabilização — piloto da mente assume controle lúcido, mantém atenção por mais tempo.</p>
+        </div>
+        <div class="fase-status inativa">Próxima</div>
+      </div>
+      <div class="fase-card" onclick="selecionarFase(this)">
+        <div class="fase-icone">💧</div>
+        <div class="fase-info">
+          <h3>Água</h3>
+          <p>Fluidez e adaptação — cada dia um novo aprendizado, nuances de cada situação.</p>
+        </div>
+        <div class="fase-status inativa">—</div>
+      </div>
+      <div class="fase-card" onclick="selecionarFase(this)">
+        <div class="fase-icone">🌱</div>
+        <div class="fase-info">
+          <h3>Terra</h3>
+          <p>Estruturação prática — plantação e colheita, compromissos coletivos firmados.</p>
+        </div>
+        <div class="fase-status inativa">—</div>
+      </div>
+      <div class="fase-card" onclick="selecionarFase(this)">
+        <div class="fase-icone">✨</div>
+        <div class="fase-info">
+          <h3>Éter</h3>
+          <p>Sutileza da transição — gestão da prótese digital, alternância consciente da atenção.</p>
+        </div>
+        <div class="fase-status inativa">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJETIVOS -->
+  <div class="page" id="page-objetivos">
+    <div class="page-header">
+      <div class="data">Sistema</div>
+      <h2>Matriz de Objetivos</h2>
+      <p>O que estou perseguindo agora.</p>
+    </div>
+
+    <div class="sep">Especificador</div>
+    <div class="objetivo-item">
+      <div class="objetivo-check" onclick="toggleCheck(this)"></div>
+      <div>
+        <div class="objetivo-texto">Protótipo HTML funcional com navegação completa</div>
+        <div class="objetivo-frente">dev · prototipos</div>
+      </div>
+    </div>
+    <div class="objetivo-item">
+      <div class="objetivo-check feito" onclick="toggleCheck(this)">✓</div>
+      <div>
+        <div class="objetivo-texto feito">Estrutura de pastas do projeto criada</div>
+        <div class="objetivo-frente">dev · estrutura</div>
+      </div>
+    </div>
+    <div class="objetivo-item">
+      <div class="objetivo-check feito" onclick="toggleCheck(this)">✓</div>
+      <div>
+        <div class="objetivo-texto feito">Obsidian configurado como base de conhecimento</div>
+        <div class="objetivo-frente">especificador · obsidian</div>
+      </div>
+    </div>
+
+    <div class="sep">Cores</div>
+    <div class="objetivo-item">
+      <div class="objetivo-check" onclick="toggleCheck(this)"></div>
+      <div>
+        <div class="objetivo-texto">Protótipo mobile do Cores</div>
+        <div class="objetivo-frente">cores · prototipos</div>
+      </div>
+    </div>
+
+    <div class="sep">Funding</div>
+    <div class="objetivo-item">
+      <div class="objetivo-check" onclick="toggleCheck(this)"></div>
+      <div>
+        <div class="objetivo-texto">Submissão Google.org Impact Challenge AI</div>
+        <div class="objetivo-frente">funding · google</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary">+ Novo objetivo</button>
+    </div>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="page" id="page-notas">
+    <div class="page-header">
+      <div class="data">Vista Lógica</div>
+      <h2>Todas as Notas</h2>
+      <p>Registros e consultas em ordem cronológica.</p>
+    </div>
+    <div class="notas-controles">
+      <span id="notas-contagem" class="hist-count"></span>
+      <button class="btn btn-outline" style="padding:5px 14px; font-size:0.7rem;" onclick="carregarNotas()">↻ Atualizar</button>
+    </div>
+    <div id="notas-timeline">
+      <div class="card" style="text-align:center; padding:48px; color:var(--text3); font-style:italic;">
+        Carregando notas...
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMAS -->
+  <div class="page" id="page-temas">
+    <div class="page-header">
+      <div class="data">Biblioteca</div>
+      <h2>Temas</h2>
+      <p>Condense diretórios externos em notas do Obsidian.</p>
+    </div>
+
+    <!-- Formulário para indicar diretório -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-label">Novo tema — indicar diretório</div>
+      <div style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:6px;">Caminho do diretório</label>
+          <input id="tema-caminho" type="text"
+            placeholder="/Users/sergio/Documents/meu-vault/tema-x"
+            style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:10px 14px; font-family:'DM Mono',monospace; font-size:0.8rem; color:var(--text); outline:none;">
+        </div>
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:6px;">Nome do tema</label>
+          <input id="tema-nome" type="text"
+            placeholder="ex: filosofia-estoica, projeto-x, tarot..."
+            style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:10px 14px; font-family:'DM Mono',monospace; font-size:0.8rem; color:var(--text); outline:none;">
+        </div>
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:6px;">Tags adicionais (opcional)</label>
+          <input id="tema-tags" type="text"
+            placeholder="ex: filosofia, referencia, projeto"
+            style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:10px 14px; font-family:'DM Mono',monospace; font-size:0.8rem; color:var(--text); outline:none;">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="processarTema()">◭ Processar diretório</button>
+          <button class="btn btn-outline" onclick="inspecionarTema()">↳ Inspecionar primeiro</button>
+        </div>
+        <div id="tema-status" style="display:none; font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--text3); padding:10px; background:var(--bg2); border-radius:4px;"></div>
+      </div>
+    </div>
+
+    <!-- Temas já gerados -->
+    <div class="sep">Temas gerados</div>
+    <div id="temas-lista">
+      <div class="hist-vazio">Carregando temas...</div>
+    </div>
+  </div>
+
+  <!-- MATRIZ -->
+  <div class="page" id="page-matriz">
+    <div class="page-header">
+      <div class="data">Objetivos</div>
+      <h2>Matriz de Objetivos</h2>
+      <p>Nível pessoal e social — derivada dos seus registros.</p>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:28px;">
+      <button class="btn btn-primary" onclick="gerarMatriz()">⊞ Gerar sugestões dos registros</button>
+      <button class="btn btn-outline" onclick="salvarMatriz()">✦ Salvar no Obsidian</button>
+    </div>
+
+    <div id="matriz-status" style="display:none; font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--text3); padding:10px; background:var(--bg2); border-radius:4px; margin-bottom:20px;"></div>
+
+    <div id="matriz-corpo">
+      <div class="hist-vazio">Clique em "Gerar sugestões" para analisar seus registros,<br>ou edite diretamente as seções abaixo.</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const API = '';
+
+  // Estado global
+  let estado = { fase: 'fogo', jogo: '05-estrategia' };
+
+  // Abas abertas dos serviços
+  const abasAbertas = { claude: null, gemini: null, notebooklm: null };
+
+  // Respostas da sessão atual
+  let sessaoRespostas = [];
+
+  // ---- TOAST ----
+  let toastTimer = null;
+  function toast(msg, tipo) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'visivel' + (tipo ? ' ' + tipo : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Listeners dos filtros
+    document.getElementById('filtro-fase').addEventListener('change', filtrarRegistros);
+    document.getElementById('filtro-jogo').addEventListener('change', filtrarRegistros);
+  });
+
+  // ---- INICIALIZAÇÃO ----
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Data de hoje
+    const agora = new Date();
+    const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('data-hoje').textContent =
+      agora.toLocaleDateString('pt-BR', opcoes);
+
+    // Data/hora no campo título
+    atualizarDataPipe();
+    setInterval(atualizarDataPipe, 30000); // atualiza a cada 30s
+
+    // Carrega status (fase + jogo)
+    await carregarStatus();
+
+    // Carrega registro de hoje
+    await carregarRegistroHoje();
+
+    // Indicador visual do campo sessão ao digitar
+    const sessaoInput = document.getElementById('registro-sessao');
+    sessaoInput.addEventListener('input', () => {
+      sessaoInput.closest('.registro-sessao-wrap').classList.toggle('preenchido', sessaoInput.value.trim().length > 0);
+    });
+
+    // Força text/plain ao colar resposta da IA — preserva markdown
+    const respostaTA = document.getElementById('notebooklm-resposta');
+    respostaTA.addEventListener('paste', (e) => {
+      const plain = e.clipboardData.getData('text/plain');
+      if (!plain) return;
+      e.preventDefault();
+      const start = respostaTA.selectionStart;
+      const end   = respostaTA.selectionEnd;
+      const val   = respostaTA.value;
+      respostaTA.value = val.slice(0, start) + plain + val.slice(end);
+      respostaTA.selectionStart = respostaTA.selectionEnd = start + plain.length;
+    });
+  });
+
+  function atualizarDataPipe() {
+    const agora = new Date();
+    const data  = agora.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const hora  = agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    const el = document.getElementById('registro-data-display');
+    if (el) el.textContent = '| ' + data + ' ' + hora + ' |';
+  }
+
+  // ---- API ----
+  async function carregarStatus() {
+    try {
+      const resp = await fetch(API + '/api/status');
+      if (!resp.ok) return;
+      const dados = await resp.json();
+      estado = dados;
+      atualizarFaseUI(dados.fase);
+      atualizarJogoUI(dados.jogo);
+    } catch(e) {
+      console.warn('Servidor offline — rodando em modo local');
+    }
+  }
+
+  async function carregarRegistroHoje() {
+    try {
+      const resp = await fetch(API + '/api/registro/hoje');
+      if (!resp.ok) return;
+      const dados = await resp.json();
+      if (dados.titulo)   document.getElementById('registro-titulo').value           = dados.titulo;
+      if (dados.session_id) {
+        const sessaoInput = document.getElementById('registro-sessao');
+        sessaoInput.value = dados.session_id;
+        sessaoInput.closest('.registro-sessao-wrap').classList.add('preenchido');
+      }
+      if (dados.agora)    document.querySelector('#tab-agora textarea').value    = dados.agora;
+      if (dados.foco)     document.querySelector('#tab-foco textarea').value     = dados.foco;
+      if (dados.reflexao) document.querySelector('#tab-reflexao textarea').value = dados.reflexao;
+    } catch(e) {}
+  }
+
+  async function salvarRegistro() {
+    const btn = document.getElementById('btn-salvar');
+    btn.textContent = '...';
+    btn.disabled = true;
+
+    const dados = {
+      titulo:     document.getElementById('registro-titulo').value,
+      session_id: document.getElementById('registro-sessao').value.trim(),
+      autor:      document.getElementById('registro-autor').value.trim(),
+      agora:      document.querySelector('#tab-agora textarea').value,
+      foco:       document.querySelector('#tab-foco textarea').value,
+      reflexao:   document.querySelector('#tab-reflexao textarea').value,
+      fase:       estado.fase,
+      jogo:       estado.jogo,
+    };
+
+    try {
+      const resp = await fetch(API + '/api/registro/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        // Upload de anexos pendentes
+        if (anexosPendentes.length) {
+          await uploadAnexos(result.arquivo, anexosPendentes);
+          anexosPendentes = [];
+          document.getElementById('anexo-novo-input').value = '';
+          document.getElementById('anexos-novo-wrap').style.display = 'none';
+          document.getElementById('anexos-novo-lista').innerHTML = '';
+        }
+        toast('✓ Registro salvo — ' + (result.arquivo || ''), 'ok');
+        btn.textContent = '✓ Salvo';
+        setTimeout(() => {
+          btn.textContent = '✦ Salvar registro';
+          btn.disabled = false;
+        }, 2000);
+      }
+    } catch(e) {
+      btn.textContent = '⚠ Servidor offline';
+      setTimeout(() => {
+        btn.textContent = '✦ Salvar registro';
+        btn.disabled = false;
+      }, 2000);
+    }
+  }
+
+  function novoRegistro() {
+    document.getElementById('registro-titulo').value  = '';
+    const sessaoInput = document.getElementById('registro-sessao');
+    sessaoInput.value = '';
+    sessaoInput.closest('.registro-sessao-wrap').classList.remove('preenchido');
+    document.querySelector('#tab-agora textarea').value    = '';
+    document.querySelector('#tab-foco textarea').value     = '';
+    document.querySelector('#tab-reflexao textarea').value = '';
+    document.querySelectorAll('.registro-tab').forEach((t,i) => t.classList.toggle('ativo', i===0));
+    document.querySelectorAll('.registro-campo').forEach((c,i) => c.classList.toggle('ativo', i===0));
+    atualizarDataPipe();
+    document.getElementById('registro-titulo').focus();
+  }
+
+  async function salvarStatus(fase, jogo) {
+    try {
+      await fetch(API + '/api/status/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase, jogo })
+      });
+    } catch(e) {}
+  }
+
+  // ---- UI ----
+  function atualizarFaseUI(fase) {
+    const nomes = { fogo: '🔥 Fogo', ar: '💨 Ar', agua: '💧 Água', terra: '🌱 Terra', eter: '✨ Éter' };
+    const classes = { fogo: 'fase-fogo', ar: 'fase-ar', agua: 'fase-agua', terra: 'fase-terra', eter: 'fase-eter' };
+
+    // Badge sidebar
+    const badge = document.querySelector('.fase-badge');
+    badge.textContent = nomes[fase] || fase;
+    badge.className = 'fase-badge ' + (classes[fase] || 'fase-fogo');
+
+    // Card início
+    const cardFase = document.querySelector('#card-fase h3');
+    const cardFaseP = document.querySelector('#card-fase p');
+    if (cardFase) cardFase.textContent = nomes[fase] || fase;
+
+    // Fases — marcar atual
+    document.querySelectorAll('.fase-card').forEach((card, i) => {
+      const fases = ['fogo','ar','agua','terra','eter'];
+      const status = card.querySelector('.fase-status');
+      const iAtual = fases.indexOf(fase);
+      if (fases[i] === fase) {
+        status.textContent = 'Fase atual';
+        status.className = 'fase-status atual';
+      } else if (i === iAtual + 1) {
+        status.textContent = 'Próxima';
+        status.className = 'fase-status inativa';
+      } else {
+        status.textContent = '—';
+        status.className = 'fase-status inativa';
+      }
+    });
+  }
+
+  function atualizarJogoUI(jogoId) {
+    document.querySelectorAll('.jogo-card').forEach(card => {
+      card.classList.remove('ativo');
+      const num = card.querySelector('.jogo-num').textContent.padStart(2, '0');
+      if (jogoId && jogoId.startsWith(num)) card.classList.add('ativo');
+    });
+  }
+
+  // Navegação
+  function navegar(pagina, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('ativo'));
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('ativo'));
+    document.getElementById('page-' + pagina).classList.add('ativo');
+    if (el) el.classList.add('ativo');
+    if (pagina === 'registro') carregarHistorico();
+    if (pagina === 'notas')    carregarNotas();
+    if (pagina === 'temas')    carregarTemas();
+    if (pagina === 'matriz')   carregarMatriz();
+  }
+
+  // ---- MATRIZ ----
+  const MATRIZ_SECOES = [
+    { id: 'pessoal',   icone: '◎', titulo: 'Objetivos Pessoais',    desc: 'saúde, lucidez, desenvolvimento' },
+    { id: 'social',    icone: '◉', titulo: 'Objetivos Sociais',     desc: 'relações, coletivo, impacto' },
+    { id: 'frentes',   icone: '◈', titulo: 'Frentes de Ação',       desc: 'especificador, cores, dev, funding' },
+    { id: 'obstaculos',icone: '◐', titulo: 'Obstáculos Identificados', desc: 'padrões a superar' },
+    { id: 'proximos',  icone: '◇', titulo: 'Próximos Passos',       desc: 'ações concretas imediatas' },
+  ];
+
+  let matrizDados = {};
+
+  async function carregarMatriz() {
+    try {
+      const resp = await fetch(API + '/api/matriz');
+      if (!resp.ok) { renderMatriz({}); return; }
+      const data = await resp.json();
+      matrizDados = data.matriz || {};
+      renderMatriz(matrizDados);
+    } catch(e) {
+      renderMatriz({});
+    }
+  }
+
+  async function gerarMatriz() {
+    setMatrizStatus('Analisando registros...');
+    try {
+      const resp = await fetch(API + '/api/matriz/gerar');
+      if (!resp.ok) throw new Error();
+      const data = await resp.json();
+      if (data.ok) {
+        // Mescla sugestões com dados existentes
+        for (const [secao, itens] of Object.entries(data.sugestoes)) {
+          if (!matrizDados[secao]) matrizDados[secao] = [];
+          for (const item of itens) {
+            const jaExiste = matrizDados[secao].some(i => i.texto === item.texto);
+            if (!jaExiste) matrizDados[secao].push(item);
+          }
+        }
+        renderMatriz(matrizDados);
+        setMatrizStatus(`✓ ${data.total_sugestoes} sugestões geradas de ${data.registros_analisados} registros. Edite e confirme.`, 'ok');
+      }
+    } catch(e) {
+      setMatrizStatus('⚠ Erro ao gerar sugestões', 'erro');
+    }
+  }
+
+  function renderMatriz(dados) {
+    const corpo = document.getElementById('matriz-corpo');
+    if (!dados || Object.keys(dados).length === 0) {
+      // Renderiza seções vazias para edição manual
+      dados = {};
+      MATRIZ_SECOES.forEach(s => { dados[s.id] = []; });
+    }
+
+    corpo.innerHTML = MATRIZ_SECOES.map(secao => {
+      const itens = dados[secao.id] || [];
+      const itensHtml = itens.map((item, i) =>
+        renderMatrizItem(secao.id, i, item)
+      ).join('');
+
+      return `<div class="matriz-secao">
+        <div class="matriz-secao-header">
+          <span style="font-size:1.2rem;">${secao.icone}</span>
+          <span class="matriz-secao-titulo">${secao.titulo}</span>
+          <span class="matriz-secao-desc">${secao.desc}</span>
+        </div>
+        <div id="matriz-itens-${secao.id}">${itensHtml}</div>
+        <button class="btn-add-item" onclick="adicionarItem('${secao.id}')">+ adicionar</button>
+      </div>`;
+    }).join('');
+  }
+
+  function renderMatrizItem(secaoId, idx, item) {
+    const feito = item.feito ? 'feito' : '';
+    return `<div class="matriz-item" id="mitem-${secaoId}-${idx}">
+      <div class="matriz-item-check ${feito}" onclick="toggleMatrizItem('${secaoId}',${idx})">${item.feito ? '✓' : ''}</div>
+      <div class="matriz-item-conteudo">
+        <div class="matriz-item-texto ${feito}" contenteditable="true"
+          onblur="editarItem('${secaoId}',${idx},this.textContent)">${item.texto}</div>
+        ${item.origem ? `<div class="matriz-item-meta">↳ identificado nos registros</div>` : ''}
+      </div>
+      <button class="matriz-item-remover" onclick="removerItem('${secaoId}',${idx})">✕</button>
+    </div>`;
+  }
+
+  function toggleMatrizItem(secaoId, idx) {
+    if (!matrizDados[secaoId]) return;
+    matrizDados[secaoId][idx].feito = !matrizDados[secaoId][idx].feito;
+    const check = document.querySelector(`#mitem-${secaoId}-${idx} .matriz-item-check`);
+    const texto = document.querySelector(`#mitem-${secaoId}-${idx} .matriz-item-texto`);
+    const feito = matrizDados[secaoId][idx].feito;
+    check.classList.toggle('feito', feito);
+    check.textContent = feito ? '✓' : '';
+    texto.classList.toggle('feito', feito);
+  }
+
+  function editarItem(secaoId, idx, novoTexto) {
+    if (!matrizDados[secaoId]) return;
+    matrizDados[secaoId][idx].texto = novoTexto.trim();
+  }
+
+  function removerItem(secaoId, idx) {
+    if (!matrizDados[secaoId]) return;
+    matrizDados[secaoId].splice(idx, 1);
+    renderMatriz(matrizDados);
+  }
+
+  function adicionarItem(secaoId) {
+    if (!matrizDados[secaoId]) matrizDados[secaoId] = [];
+    matrizDados[secaoId].push({ texto: 'Novo objetivo', feito: false, origem: false });
+    renderMatriz(matrizDados);
+    // Foca no novo item
+    const itens = document.querySelectorAll(`#matriz-itens-${secaoId} .matriz-item-texto`);
+    if (itens.length) {
+      const ultimo = itens[itens.length - 1];
+      ultimo.focus();
+      // Seleciona todo o texto
+      const range = document.createRange();
+      range.selectNodeContents(ultimo);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    }
+  }
+
+  async function salvarMatriz() {
+    try {
+      const resp = await fetch(API + '/api/matriz/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matriz: matrizDados })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        toast('✓ Matriz salva no Obsidian', 'ok');
+        setMatrizStatus('✓ Salva em objetivos/matriz.md', 'ok');
+      }
+    } catch(e) {
+      toast('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  function setMatrizStatus(msg, tipo) {
+    const el = document.getElementById('matriz-status');
+    el.style.display = msg ? 'block' : 'none';
+    el.textContent = msg;
+    el.style.color = tipo === 'erro' ? 'var(--fogo)' : tipo === 'ok' ? 'var(--accent)' : 'var(--text3)';
+  }
+
+  // ---- EXPORTAR SESSÃO ----
+  const JOGOS_EXPORT = [
+    {num:'01',nome:'Caça'},{num:'02',nome:'Guerra'},{num:'03',nome:'Superação'},
+    {num:'04',nome:'Sedução'},{num:'05',nome:'Estratégia'},{num:'06',nome:'Oráculo'},
+    {num:'07',nome:'Vício'},{num:'08',nome:'Brincadeira'},{num:'09',nome:'Play'},
+    {num:'10',nome:'Projeção'},{num:'11',nome:'Simulação'},{num:'12',nome:'Antecipação'}
+  ];
+
+  let sessaoExportada = null;
+
+  async function exportarSessao() {
+    const sessionId = document.getElementById('export-session-id').value.trim();
+    if (!sessionId) { toast('Digite um session_id', 'erro'); return; }
+
+    setExportStatus('Buscando registros da sessão...');
+    try {
+      const resp = await fetch(API + '/api/sessao?id=' + encodeURIComponent(sessionId));
+      if (!resp.ok) throw new Error();
+      const data = await resp.json();
+
+      if (!data.registros?.length && !data.consultas?.length) {
+        setExportStatus('⚠ Nenhum registro encontrado para: ' + sessionId, 'erro');
+        return;
+      }
+
+      sessaoExportada = data;
+      const json = JSON.stringify(data, null, 2);
+      navigator.clipboard.writeText(json).then(() => {
+        toast('✓ JSON copiado — ' + data.registros.length + ' registros', 'ok');
+      });
+      setExportStatus(
+        `✓ "${sessionId}" · ${data.registros.length} registro(s) · ${data.consultas.length} consulta(s) · JSON copiado`,
+        'ok'
+      );
+      renderJogosExport();
+      document.getElementById('export-jogos').style.display = 'block';
+    } catch(e) {
+      setExportStatus('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  async function exportarSessaoTexto() {
+    const sessionId = document.getElementById('export-session-id').value.trim();
+    if (!sessionId) { toast('Digite um session_id', 'erro'); return; }
+
+    setExportStatus('Gerando texto...');
+    try {
+      const resp = await fetch(API + '/api/sessao?id=' + encodeURIComponent(sessionId) + '&formato=texto');
+      if (!resp.ok) throw new Error();
+      const data = await resp.json();
+
+      if (!data.texto) { setExportStatus('⚠ Nenhum conteúdo encontrado', 'erro'); return; }
+
+      sessaoExportada = data;
+      navigator.clipboard.writeText(data.texto).then(() => {
+        toast('✓ Texto copiado para o clipboard', 'ok');
+      });
+      setExportStatus(`✓ Texto copiado · ${data.total_registros} registro(s)`, 'ok');
+      renderJogosExport();
+      document.getElementById('export-jogos').style.display = 'block';
+    } catch(e) {
+      setExportStatus('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  function renderJogosExport() {
+    const grid = document.getElementById('export-jogos-grid');
+    grid.innerHTML = JOGOS_EXPORT.map(j =>
+      `<button class="export-jogo-btn" onclick="enviarParaJogo('${j.num}','${j.nome}')">
+        ${j.num}<br>${j.nome}
+      </button>`
+    ).join('');
+  }
+
+  function enviarParaJogo(num, nome) {
+    if (!sessaoExportada) return;
+    const prefixo = `# Análise sob a perspectiva do Jogo ${num} · ${nome}\n\n` +
+      `Analise os registros abaixo sob a perspectiva do "Jogo como ${nome}".\n` +
+      `Identifique padrões, o que está em jogo nessa situação, e sugira como navegar de forma lúcida.\n\n---\n\n`;
+    const conteudo = prefixo + (sessaoExportada.texto || JSON.stringify(sessaoExportada, null, 2));
+    navigator.clipboard.writeText(conteudo).then(() => {
+      toast('✓ Copiado para Jogo ' + num + ' · ' + nome, 'ok');
+    });
+  }
+
+  async function gerarArquivoSessao() {
+    const sessionId = document.getElementById('export-session-id').value.trim();
+    if (!sessionId) { toast('Digite um session_id', 'erro'); return; }
+    setExportStatus('Gerando arquivo...', '');
+    try {
+      const resp = await fetch(API + '/api/sessao/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const data = await resp.json();
+      if (!data.ok) { setExportStatus('⚠ ' + (data.erro || 'erro'), 'erro'); return; }
+      navigator.clipboard.writeText(data.texto).then(() => {});
+      setExportStatus(
+        `✓ Salvo: ${data.arquivo} · ${data.total_registros} registro(s) · ${data.total_consultas} consulta(s) · texto copiado`,
+        'ok'
+      );
+    } catch(e) {
+      setExportStatus('⚠ Erro ao gerar arquivo', 'erro');
+    }
+  }
+
+  function setExportStatus(msg, tipo) {
+    const el = document.getElementById('export-status');
+    el.style.display = msg ? 'block' : 'none';
+    el.textContent = msg;
+    el.style.color = tipo === 'erro' ? 'var(--fogo)' : tipo === 'ok' ? 'var(--accent)' : 'var(--text3)';
+  }
+
+  // Popula datalist com session_ids existentes ao carregar histórico
+  function popularSessoes(registros) {
+    const ids = [...new Set(registros.map(r => r.session_id).filter(Boolean))];
+    const dl = document.getElementById('sessoes-disponiveis');
+    if (dl) dl.innerHTML = ids.map(id => `<option value="${id}">`).join('');
+  }
+
+  // ---- TEMAS ----
+  async function inspecionarTema() {
+    const caminho = document.getElementById('tema-caminho').value.trim();
+    if (!caminho) { toast('Indique um caminho de diretório', 'erro'); return; }
+
+    setTemaStatus('Inspecionando...');
+    try {
+      const resp = await fetch(API + '/api/tema/inspecionar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caminho })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        const info = `Encontrados: ${data.total} arquivos\n` +
+          Object.entries(data.por_tipo).map(([k,v]) => `  ${k}: ${v}`).join('\n');
+        setTemaStatus(info, 'ok');
+      } else {
+        setTemaStatus('⚠ ' + (data.erro || 'Erro'), 'erro');
+      }
+    } catch(e) {
+      setTemaStatus('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  async function processarTema() {
+    const caminho = document.getElementById('tema-caminho').value.trim();
+    const nome    = document.getElementById('tema-nome').value.trim();
+    const tags    = document.getElementById('tema-tags').value.trim();
+
+    if (!caminho) { toast('Indique um caminho de diretório', 'erro'); return; }
+    if (!nome)    { toast('Dê um nome ao tema', 'erro'); return; }
+
+    setTemaStatus('Processando arquivos... aguarde.');
+    try {
+      const resp = await fetch(API + '/api/tema/processar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caminho, nome, tags })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        toast('✓ Tema gerado — ' + data.arquivo, 'ok');
+        setTemaStatus(
+          `✓ Gerado: ${data.arquivo}\n` +
+          `${data.arquivos_processados} arquivos analisados\n` +
+          `${data.chars} trechos classificados nas seções\n` +
+          `${data.trechos_descartados} trechos fora do escopo`,
+          'ok'
+        );
+        document.getElementById('tema-caminho').value = '';
+        document.getElementById('tema-nome').value = '';
+        document.getElementById('tema-tags').value = '';
+        carregarTemas();
+      } else {
+        setTemaStatus('⚠ ' + (data.erro || 'Erro'), 'erro');
+      }
+    } catch(e) {
+      setTemaStatus('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  function setTemaStatus(msg, tipo) {
+    const el = document.getElementById('tema-status');
+    el.style.display = msg ? 'block' : 'none';
+    el.textContent = msg;
+    el.style.color = tipo === 'erro' ? 'var(--fogo)' : tipo === 'ok' ? 'var(--accent)' : 'var(--text3)';
+  }
+
+  async function carregarTemas() {
+    try {
+      const resp = await fetch(API + '/api/temas');
+      if (!resp.ok) return;
+      const temas = await resp.json();
+      const lista = document.getElementById('temas-lista');
+
+      if (!temas.length) {
+        lista.innerHTML = '<div class="hist-vazio">Nenhum tema gerado ainda.</div>';
+        return;
+      }
+
+      lista.innerHTML = temas.map(t => {
+        const tags = (t.tags || []).map(tag =>
+          '<span class="hist-badge badge-jogo">' + tag + '</span>'
+        ).join('');
+        return '<div class="card" style="margin-bottom:12px; cursor:pointer;" onclick="abrirTemaObsidian(\'' + (t.arquivo||'') + '\')">' +
+          '<div class="card-label">' + (t.data||'') + ' · ' + (t.arquivos||0) + ' arquivos processados</div>' +
+          '<h3 style="font-size:1.2rem; margin-bottom:8px;">' + (t.nome||t.arquivo) + '</h3>' +
+          '<p style="font-size:0.9rem; color:var(--text2); font-style:italic; margin-bottom:10px;">' + (t.preview||'') + '</p>' +
+          '<div style="display:flex; gap:6px; flex-wrap:wrap;">' + tags + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {}
+  }
+
+  function abrirTemaObsidian(arquivo) {
+    window.open('obsidian://open?vault=obsidian&file=temas%2F' + encodeURIComponent(arquivo), '_blank');
+  }
+
+  // Tabs do registro
+  function trocarTab(el, id) {
+    document.querySelectorAll('.registro-tab').forEach(t => t.classList.remove('ativo'));
+    document.querySelectorAll('.registro-campo').forEach(c => c.classList.remove('ativo'));
+    el.classList.add('ativo');
+    document.getElementById('tab-' + id).classList.add('ativo');
+  }
+
+  // Selecionar jogo — salva no servidor
+  function selecionarJogo(el) {
+    document.querySelectorAll('.jogo-card').forEach(c => c.classList.remove('ativo'));
+    el.classList.add('ativo');
+    const num = el.querySelector('.jogo-num').textContent.padStart(2,'0');
+    const sub = el.querySelector('.jogo-sub').textContent.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z]/g, '');
+    estado.jogo = num + '-' + sub;
+    salvarStatus(estado.fase, estado.jogo);
+
+    // Atualiza card início
+    const cardJogo = document.querySelector('#card-jogo h3');
+    const cardJogoP = document.querySelector('#card-jogo p');
+    if (cardJogo) cardJogo.textContent = '◈ ' + el.querySelector('.jogo-nome').textContent;
+  }
+
+  // Selecionar fase ao clicar no card de fase
+  function selecionarFase(el) {
+    const fases = ['fogo','ar','agua','terra','eter'];
+    const cards = document.querySelectorAll('.fase-card');
+    let fase = 'fogo';
+    cards.forEach((card, i) => { if (card === el) fase = fases[i]; });
+    estado.fase = fase;
+    atualizarFaseUI(fase);
+    salvarStatus(estado.fase, estado.jogo);
+  }
+
+  async function carregarConsultasDoRegistro(ref) {
+    if (!ref) return;
+    try {
+      const resp = await fetch(API + '/api/consultas?ref=' + encodeURIComponent(ref));
+      if (!resp.ok) return;
+      const consultas = await resp.json();
+
+      const wrap = document.getElementById('consultas-anteriores');
+      const lista = document.getElementById('consultas-lista');
+
+      if (!consultas.length) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      wrap.style.display = 'block';
+      lista.innerHTML = consultas.map((c, i) => {
+        const servico  = c.servico || 'manual';
+        const data_hr  = (c.data || '') + (c.hora ? ' · ' + c.hora : '');
+        const titulo   = c.titulo || ('Consulta ' + servico + ' — ' + data_hr);
+        const pergunta = c.pergunta && c.pergunta !== '_prompt padrão_' ? c.pergunta : '';
+
+        const faseTag = c.fase ? '<span class="hist-badge badge-fase-' + c.fase + '">#fase/' + c.fase + '</span>' : '';
+        const jogoTag = c.jogo ? '<span class="hist-badge badge-jogo">#jogo/' + c.jogo.substring(0,2) + '</span>' : '';
+
+        // Link para abrir no Obsidian via URI
+        const obsidianLink = 'obsidian://open?vault=obsidian&file=consultas%2F' + encodeURIComponent(c.arquivo || '');
+
+        return '<div class="consulta-item" onclick="toggleConsulta(this)">' +
+          '<div class="consulta-item-header">' +
+            '<span class="consulta-servico ' + servico + '">' + servico + '</span>' +
+            '<span class="consulta-item-data">' + data_hr + '</span>' +
+            '<a href="' + obsidianLink + '" onclick="event.stopPropagation()" title="Abrir no Obsidian" ' +
+              'style="font-family:\'DM Mono\',monospace;font-size:0.6rem;color:var(--text3);text-decoration:none;' +
+              'padding:2px 6px;border:1px solid var(--border);border-radius:3px;margin-left:6px;"' +
+            '>⊙ Obsidian</a>' +
+            '<button onclick="event.stopPropagation(); excluirConsulta(\'' + (c.arquivo||'') + '\')" ' +
+              'style="margin-left:6px;background:none;border:1px solid var(--fogo);color:var(--fogo);' +
+              'border-radius:3px;padding:2px 6px;font-size:0.6rem;cursor:pointer;">🗑</button>' +
+          '</div>' +
+          '<div class="consulta-item-pergunta"><strong>' + titulo + '</strong>' +
+            (pergunta ? '<br><em>' + pergunta + '</em>' : '') +
+          '</div>' +
+          '<div class="consulta-item-badges">' + faseTag + jogoTag + '</div>' +
+          '<div class="consulta-item-resposta">' + (c.resposta || '') + '</div>' +
+        '</div>';
+      }).join('');
+
+    } catch(e) {}
+  }
+
+  async function excluirNota(tipo) {
+    if (!registroAtual) return;
+    const arquivo = registroAtual.arquivo;
+    const label   = tipo === 'registro' ? 'este registro' : 'esta consulta';
+
+    if (!confirm('Excluir ' + label + '?\n\n' + arquivo + '\n\nEsta ação não pode ser desfeita.')) return;
+
+    try {
+      const resp = await fetch(API + '/api/excluir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, arquivo })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        toast('🗑 ' + tipo + ' excluído', 'ok');
+        fecharDetalhe();
+        await carregarHistorico();
+      } else {
+        alert('Erro ao excluir: ' + (data.erro || 'desconhecido'));
+      }
+    } catch(e) {
+      alert('Servidor offline');
+    }
+  }
+
+  async function excluirConsulta(arquivo) {
+    if (!confirm('Excluir esta consulta?\n\n' + arquivo + '\n\nEsta ação não pode ser desfeita.')) return;
+
+    try {
+      const resp = await fetch(API + '/api/excluir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'consulta', arquivo })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        toast('🗑 Consulta excluída', 'ok');
+        carregarConsultasDoRegistro(registroAtual?.arquivo);
+      } else {
+        alert('Erro ao excluir: ' + (data.erro || 'desconhecido'));
+      }
+    } catch(e) {
+      alert('Servidor offline');
+    }
+  }
+
+  function toggleConsulta(el) {
+    el.classList.toggle('expandido');
+  }
+
+  let registroAtual = null;
+
+  function montarNota(r) {
+    return [
+      r.titulo ? '# ' + r.titulo : '',
+      r.agora    ? '## Como estava\n' + r.agora    : '',
+      r.foco     ? '## Foco\n'        + r.foco     : '',
+      r.reflexao ? '## Reflexão\n'    + r.reflexao : '',
+    ].filter(Boolean).join('\n\n');
+  }
+
+  function setConsultaStatus(msg, tipo) {
+    const el = document.getElementById('consulta-status');
+    el.style.display = msg ? 'block' : 'none';
+    el.textContent = msg;
+    el.className = 'consulta-status' + (tipo ? ' ' + tipo : '');
+  }
+
+  async function consultarIA(servico) {
+    if (!registroAtual) return;
+    const nota      = montarNota(registroAtual);
+    const pergunta  = document.getElementById('consulta-pergunta').value.trim();
+    const ref       = registroAtual.arquivo || '';
+    const session_id = registroAtual.session_id || '';
+
+    if (servico === 'claude' || servico === 'gemini' || servico === 'notebooklm') {
+      const urls = {
+        claude:      'https://claude.ai',
+        gemini:      'https://gemini.google.com',
+        notebooklm:  'https://notebooklm.google.com'
+      };
+      const texto = (pergunta ? pergunta + '\n\n---\n' : '') + nota;
+
+      navigator.clipboard.writeText(texto).then(() => {
+        setConsultaStatus('✓ Nota copiada! Cole no ' + servico + ' e traga a resposta aqui.', 'ok');
+        toast('✓ Nota copiada para o clipboard', 'ok');
+      }).catch(() => {
+        setConsultaStatus('Cole manualmente no ' + servico, '');
+      });
+
+      // Reutiliza aba aberta se ainda existir
+      if (abasAbertas[servico] && !abasAbertas[servico].closed) {
+        abasAbertas[servico].focus();
+      } else {
+        abasAbertas[servico] = window.open(urls[servico], '_blank');
+      }
+
+      // Atualiza label do serviço no painel
+      const labelEl = document.getElementById('servico-label');
+      if (labelEl) labelEl.textContent = servico;
+
+      document.getElementById('notebooklm-wrap').style.display = 'block';
+      document.getElementById('notebooklm-wrap').dataset.servico    = servico;
+      document.getElementById('notebooklm-wrap').dataset.session_id = session_id;
+      document.getElementById('notebooklm-resposta').value = '';
+      document.getElementById('notebooklm-resposta').focus();
+      document.getElementById('consulta-resposta-wrap') &&
+        (document.getElementById('consulta-resposta-wrap').style.display = 'none');
+      return;
+    }
+
+    document.getElementById('consulta-resposta-wrap').style.display = 'none';
+    document.getElementById('notebooklm-wrap').style.display = 'none';
+    setConsultaStatus('Consultando ' + servico + '...', '');
+
+    try {
+      const resp = await fetch(API + '/api/consulta/' + servico, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nota, pergunta, ref })
+      });
+      const data = await resp.json();
+
+      if (data.ok) {
+        setConsultaStatus('✓ Salvo', 'ok');
+        toast('✓ Consulta salva — ' + data.arquivo, 'ok');
+        document.getElementById('consulta-resposta-texto').textContent = data.resposta;
+        document.getElementById('consulta-resposta-wrap').style.display = 'block';
+      } else {
+        setConsultaStatus('⚠ ' + (data.erro || 'Erro desconhecido'), 'erro');
+        toast('⚠ ' + (data.erro || 'Erro'), 'erro');
+      }
+    } catch(e) {
+      setConsultaStatus('⚠ Servidor offline', 'erro');
+      toast('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  function consultarNotebookLM() {
+    consultarIA('notebooklm');
+  }
+
+  function fecharNotebookLM() {
+    document.getElementById('notebooklm-wrap').style.display = 'none';
+    document.getElementById('notebooklm-resposta').value = '';
+    document.getElementById('sessao-respostas').style.display = 'none';
+    document.getElementById('sessao-respostas-lista').innerHTML = '';
+    document.getElementById('sessao-contador').textContent = '';
+    sessaoRespostas = [];
+    setConsultaStatus('', '');
+  }
+
+  async function salvarRespostaNotebookLM() {
+    const resposta = document.getElementById('notebooklm-resposta').value.trim();
+    if (!resposta) return;
+
+    const pergunta   = document.getElementById('consulta-pergunta').value.trim();
+    const ref        = registroAtual?.arquivo || '';
+    const servico    = document.getElementById('notebooklm-wrap').dataset.servico    || 'notebooklm';
+    const session_id = document.getElementById('notebooklm-wrap').dataset.session_id || '';
+
+    try {
+      const resp = await fetch(API + '/api/consulta/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          servico, pergunta, resposta, ref, session_id,
+          fase: estado.fase,
+          jogo: estado.jogo
+        })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        // Adiciona à lista da sessão
+        sessaoRespostas.push({ servico, arquivo: data.arquivo, resposta, pergunta });
+        atualizarSessaoRespostas();
+
+        toast('✓ Resposta ' + sessaoRespostas.length + ' salva', 'ok');
+        setConsultaStatus('✓ Salva! Cole outra resposta ou encerre a sessão.', 'ok');
+
+        // Limpa textarea — painel permanece aberto
+        document.getElementById('notebooklm-resposta').value = '';
+        document.getElementById('notebooklm-resposta').focus();
+
+        // Atualiza consultas anteriores em background
+        carregarConsultasDoRegistro(ref);
+      }
+    } catch(e) {
+      setConsultaStatus('⚠ Servidor offline', 'erro');
+      toast('⚠ Servidor offline', 'erro');
+    }
+  }
+
+  function atualizarSessaoRespostas() {
+    const wrap     = document.getElementById('sessao-respostas');
+    const lista    = document.getElementById('sessao-respostas-lista');
+    const contador = document.getElementById('sessao-contador');
+
+    if (!sessaoRespostas.length) {
+      wrap.style.display = 'none';
+      contador.textContent = '';
+      return;
+    }
+
+    contador.textContent = sessaoRespostas.length + ' salva' + (sessaoRespostas.length > 1 ? 's' : '');
+    wrap.style.display = 'block';
+    lista.innerHTML = sessaoRespostas.map((r, i) =>
+      '<div class="consulta-item" style="margin-bottom:8px;">' +
+        '<div class="consulta-item-header">' +
+          '<span class="consulta-servico ' + r.servico + '">' + r.servico + '</span>' +
+          '<span class="consulta-item-data">#' + (i+1) + '</span>' +
+        '</div>' +
+        '<div class="consulta-item-pergunta">' + (r.pergunta || '_prompt padrão_') + '</div>' +
+        '<div style="margin-top:6px; font-size:0.85rem; color:var(--text2); font-style:italic;">' +
+          r.resposta.substring(0, 120) + (r.resposta.length > 120 ? '...' : '') +
+        '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  async function salvarConsultaManual() {
+    const resposta = document.getElementById('consulta-resposta-texto').textContent.trim();
+    const pergunta = document.getElementById('consulta-pergunta').value.trim();
+    const ref      = registroAtual?.arquivo || '';
+    if (!resposta) return;
+
+    try {
+      await fetch(API + '/api/consulta/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          servico: 'ia', pergunta, resposta, ref,
+          fase: estado.fase,
+          jogo: estado.jogo
+        })
+      });
+    } catch(e) {}
+  }
+
+  // ---- NOTAS TIMELINE ----
+  async function carregarNotas() {
+    const container = document.getElementById('notas-timeline');
+    container.innerHTML = '<div class="card" style="text-align:center;padding:48px;color:var(--text3);font-style:italic;">Carregando...</div>';
+    try {
+      const resp = await fetch(API + '/api/notas?limite=80');
+      if (!resp.ok) throw new Error('erro');
+      const notas = await resp.json();
+      document.getElementById('notas-contagem').textContent = notas.length + ' nota' + (notas.length !== 1 ? 's' : '');
+      renderTimeline(notas);
+    } catch(e) {
+      container.innerHTML = '<div class="card" style="text-align:center;padding:48px;color:var(--text3);font-style:italic;">Servidor offline</div>';
+    }
+  }
+
+  function renderTimeline(notas) {
+    const container = document.getElementById('notas-timeline');
+    if (!notas.length) {
+      container.innerHTML = '<div class="card" style="text-align:center;padding:48px;color:var(--text3);font-style:italic;">Nenhuma nota encontrada.</div>';
+      return;
+    }
+
+    let html = '';
+    let dataAtual = '';
+
+    notas.forEach((n, i) => {
+      // Separador de data
+      if (n.data && n.data !== dataAtual) {
+        dataAtual = n.data;
+        const partes = dataAtual.split('-');
+        const meses = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        const dataLabel = partes[2] + ' ' + (meses[parseInt(partes[1])] || '') + ' ' + (partes[0] || '');
+        html += '<div class="notas-data-sep">' + dataLabel + '</div>';
+      }
+
+      const tipo    = n.tipo || 'registro';
+      const hora    = n.hora || '';
+      const titulo  = n.titulo || (tipo === 'consulta' ? 'Consulta ' + (n.servico||'') : 'Registro');
+      const preview = tipo === 'registro'
+        ? (n.agora || n.foco || '').substring(0, 100)
+        : (n.resposta || '').substring(0, 100);
+
+      const faseTag    = n.fase    ? '<span class="hist-badge badge-fase-' + n.fase + '">' + (FASE_NOMES[n.fase]||n.fase) + '</span>' : '';
+      const jogoNum    = (n.jogo||'').substring(0,2);
+      const jogoTag    = jogoNum   ? '<span class="hist-badge badge-jogo">' + jogoNum + ' · ' + (JOGO_NOMES[jogoNum]||'') + '</span>' : '';
+      const servicoTag = n.servico ? '<span class="hist-badge badge-jogo consulta-servico ' + n.servico + '" style="font-size:0.6rem;">' + n.servico + '</span>' : '';
+      const sessaoTag  = n.session_id ? '<span class="hist-badge badge-jogo">⊛ ' + n.session_id + '</span>' : '';
+
+      const isLast = i === notas.length - 1;
+
+      html += '<div class="notas-timeline-item">' +
+        '<div class="notas-timeline-lado">' +
+          '<div class="notas-timeline-hora">' + hora + '</div>' +
+          '<div class="notas-timeline-ponto tipo-' + tipo + '"></div>' +
+          (!isLast ? '<div class="notas-timeline-linha"></div>' : '') +
+        '</div>' +
+        '<div class="notas-timeline-card" onclick="abrirNota(\'' + tipo + '\',\'' + (n.arquivo||'') + '\')">' +
+          '<div class="card-tipo ' + tipo + '">' + tipo + (n.servico ? ' · ' + n.servico : '') + '</div>' +
+          '<div class="card-titulo">' + titulo + '</div>' +
+          (preview ? '<div class="card-preview">' + preview + (preview.length >= 100 ? '...' : '') + '</div>' : '') +
+          '<div class="card-meta">' + faseTag + jogoTag + servicoTag + sessaoTag + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  function abrirNota(tipo, arquivo) {
+    if (tipo === 'registro') {
+      // Navega para histórico e abre o registro
+      navegar('registro', null);
+      setTimeout(() => {
+        const idx = todosRegistros.findIndex(r => r.arquivo === arquivo);
+        if (idx >= 0) abrirDetalhe(idx);
+        else carregarHistorico();
+      }, 300);
+    } else {
+      // Abre no Obsidian
+      const pasta = tipo === 'consulta' ? 'consultas' : 'registros';
+      window.open('obsidian://open?vault=obsidian&file=' + pasta + '%2F' + encodeURIComponent(arquivo), '_blank');
+    }
+  }
+  let todosRegistros = [];
+
+  const FASE_NOMES = { fogo:'🔥 Fogo', ar:'💨 Ar', agua:'💧 Água', terra:'🌱 Terra', eter:'✨ Éter' };
+  const JOGO_NOMES = {
+    '01':'Caça','02':'Guerra','03':'Superação','04':'Sedução',
+    '05':'Estratégia','06':'Oráculo','07':'Vício','08':'Brincadeira',
+    '09':'Play','10':'Projeção','11':'Simulação','12':'Antecipação'
+  };
+
+  async function carregarHistorico() {
+    try {
+      const resp = await fetch(API + '/api/registros');
+      if (!resp.ok) return;
+      todosRegistros = await resp.json();
+      popularSessoes(todosRegistros);
+      filtrarRegistros();
+    } catch(e) {
+      document.getElementById('historico-lista').innerHTML =
+        '<div class="hist-vazio">Servidor offline — inicie o servidor_especificador.py</div>';
+    }
+  }
+
+  function filtrarRegistros() {
+    const fase = document.getElementById('filtro-fase').value;
+    const jogo = document.getElementById('filtro-jogo').value;
+
+    let filtrados = todosRegistros;
+    if (fase) filtrados = filtrados.filter(r => r.fase === fase);
+    if (jogo) filtrados = filtrados.filter(r => r.jogo && r.jogo.startsWith(jogo));
+
+    document.getElementById('historico-contagem').textContent =
+      filtrados.length + ' registro' + (filtrados.length !== 1 ? 's' : '');
+
+    renderHistorico(filtrados);
+  }
+
+  function renderHistorico(registros) {
+    const lista = document.getElementById('historico-lista');
+    document.getElementById('historico-detalhe').style.display = 'none';
+    lista.style.display = 'block';
+
+    if (!registros.length) {
+      lista.innerHTML = '<div class="hist-vazio">Nenhum registro encontrado.</div>';
+      return;
+    }
+
+    lista.innerHTML = registros.map((r, i) => {
+      const partes = (r.data || '').split('-');
+      const dia = partes[2] || '—';
+      const mes = partes[1] ? ['','Jan','Fev','Mar','Abr','Mai','Jun',
+        'Jul','Ago','Set','Out','Nov','Dez'][parseInt(partes[1])] : '';
+
+      const faseClass  = r.fase ? 'badge-fase-' + r.fase : 'badge-jogo';
+      const faseNome   = FASE_NOMES[r.fase] || r.fase || '—';
+      const jogoNum    = r.jogo ? r.jogo.substring(0,2) : '';
+      const jogoNome   = jogoNum ? JOGO_NOMES[jogoNum] : '';
+      const sessionTag = r.session_id
+        ? '<span class="hist-badge badge-jogo" title="sessão">⊛ ' + r.session_id + '</span>'
+        : '';
+
+      const preview = r.agora
+        ? r.agora.substring(0, 120) + (r.agora.length > 120 ? '...' : '')
+        : '<em>sem conteúdo</em>';
+
+      return '<div class="hist-item" onclick="abrirDetalhe(' + i + ')">' +
+        '<div class="hist-data"><strong>' + dia + '</strong>' + mes + ' ' + (partes[0]||'') +
+          (r.hora ? '<br><span style="font-size:0.8rem;color:var(--text2)">' + r.hora + '</span>' : '') +
+        '</div>' +
+        '<div class="hist-preview"><strong>' + (r.titulo || r.foco || 'Sem título') + '</strong>' + preview + '</div>' +
+        '<div class="hist-badges">' +
+          sessionTag +
+          (r.fase ? '<span class="hist-badge ' + faseClass + '">' + faseNome + '</span>' : '') +
+          (jogoNome ? '<span class="hist-badge badge-jogo">' + jogoNum + ' · ' + jogoNome + '</span>' : '') +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function abrirDetalhe(index) {
+    const r = todosRegistros[index];
+    if (!r) return;
+    registroAtual = r;
+
+    document.getElementById('historico-lista').style.display = 'none';
+    const detalhe = document.getElementById('historico-detalhe');
+    detalhe.style.display = 'block';
+
+    // Limpa painel de consulta
+    sessaoRespostas = [];
+    document.getElementById('consulta-pergunta').value = '';
+    document.getElementById('consulta-resposta-wrap') &&
+      (document.getElementById('consulta-resposta-wrap').style.display = 'none');
+    document.getElementById('notebooklm-wrap').style.display = 'none';
+    document.getElementById('sessao-respostas').style.display = 'none';
+    document.getElementById('sessao-contador').textContent = '';
+    setConsultaStatus('', '');
+
+    document.getElementById('detalhe-data').textContent =
+      (r.data || '') + (r.hora ? ' · ' + r.hora : '') + (r.titulo ? ' · ' + r.titulo : '');
+
+    const jogoNum  = r.jogo ? r.jogo.substring(0,2) : '';
+    const jogoNome = jogoNum ? JOGO_NOMES[jogoNum] : '';
+    const faseNome = FASE_NOMES[r.fase] || r.fase || '';
+    const faseClass = r.fase ? 'badge-fase-' + r.fase : '';
+
+    document.getElementById('detalhe-badges').innerHTML =
+      (faseNome ? '<span class="hist-badge ' + faseClass + '">' + faseNome + '</span>' : '') +
+      (jogoNome ? '<span class="hist-badge badge-jogo">' + jogoNum + ' · ' + jogoNome + '</span>' : '');
+
+    document.getElementById('detalhe-agora').textContent    = r.agora    || '—';
+    document.getElementById('detalhe-foco').textContent     = r.foco     || '—';
+    document.getElementById('detalhe-reflexao').textContent = r.reflexao || '—';
+
+    // Carrega anexos
+    carregarAnexosDetalhe(r.arquivo);
+
+    // Campo sessão editável
+    const sessaoInput = document.getElementById('detalhe-sessao');
+    const sessaoWrap  = document.getElementById('detalhe-sessao-wrap');
+    sessaoInput.value = r.session_id || '';
+    sessaoWrap.classList.toggle('preenchido', !!(r.session_id));
+    sessaoInput.oninput = () => sessaoWrap.classList.toggle('preenchido', sessaoInput.value.trim().length > 0);
+
+    // Carrega consultas associadas
+    carregarConsultasDoRegistro(r.arquivo);
+  }
+
+  // ---- ANEXOS ----
+
+  let anexosPendentes = []; // arquivos selecionados antes de salvar o registro
+
+  function previewAnexosNovo(input) {
+    anexosPendentes = Array.from(input.files);
+    const wrap = document.getElementById('anexos-novo-wrap');
+    const lista = document.getElementById('anexos-novo-lista');
+    if (!anexosPendentes.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    lista.innerHTML = anexosPendentes.map(f =>
+      `<span style="font-family:'DM Mono',monospace; font-size:0.65rem; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:2px 8px; color:var(--text2);">${f.name}</span>`
+    ).join('');
+  }
+
+  async function uploadAnexos(arquivoRegistro, files) {
+    const resultados = [];
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('registro', arquivoRegistro);
+      try {
+        const resp = await fetch(API + '/api/anexo/upload', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.ok) resultados.push(data.arquivo);
+      } catch(e) { console.error('upload erro:', e); }
+    }
+    return resultados;
+  }
+
+  async function uploadAnexosDetalhe(input) {
+    if (!registroAtual) return;
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    toast('Enviando anexos...', '');
+    const salvos = await uploadAnexos(registroAtual.arquivo, files);
+    if (salvos.length) {
+      toast(`✓ ${salvos.length} anexo(s) salvos`, 'ok');
+      carregarAnexosDetalhe(registroAtual.arquivo);
+    }
+    input.value = '';
+  }
+
+  async function carregarAnexosDetalhe(arquivoRegistro) {
+    try {
+      const resp = await fetch(API + '/api/anexos?registro=' + encodeURIComponent(arquivoRegistro));
+      const data = await resp.json();
+      const secao = document.getElementById('detalhe-anexos-secao');
+      const lista = document.getElementById('detalhe-anexos-lista');
+      if (!data.arquivos?.length) { secao.style.display = 'none'; return; }
+      secao.style.display = 'block';
+      lista.innerHTML = data.arquivos.map(a => {
+        const ext = a.split('.').pop().toLowerCase();
+        const icone = ['jpg','jpeg','png','gif','webp'].includes(ext) ? '🖼' :
+                      ext === 'pdf' ? '📄' : ['mp3','m4a'].includes(ext) ? '🎵' : '📎';
+        return `<a href="${API}/api/anexo?arquivo=${encodeURIComponent(a)}" target="_blank"
+          style="font-family:'DM Mono',monospace; font-size:0.65rem; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:3px 8px; color:var(--text2); text-decoration:none; display:flex; align-items:center; gap:4px;">
+          ${icone} ${a}</a>`;
+      }).join('');
+    } catch(e) {}
+  }
+
+  async function salvarSessaoDetalhe() {
+    if (!registroAtual) return;
+    const novoId = document.getElementById('detalhe-sessao').value.trim();
+    const btn    = document.getElementById('detalhe-sessao-btn');
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+      const resp = await fetch(API + '/api/registro/sessao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ arquivo: registroAtual.arquivo, session_id: novoId })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        registroAtual.session_id = novoId;
+        toast('✓ Sessão atualizada', 'ok');
+      } else {
+        toast('Erro: ' + (data.erro || 'desconhecido'), 'erro');
+      }
+    } catch(e) {
+      console.error('salvarSessaoDetalhe erro:', e, 'arquivo:', registroAtual?.arquivo);
+      toast('Erro ao salvar sessão', 'erro');
+    } finally {
+      btn.textContent = 'salvar';
+      btn.disabled = false;
+    }
+  }
+
+  function fecharDetalhe() {
+    document.getElementById('historico-lista').style.display = 'block';
+    document.getElementById('historico-detalhe').style.display = 'none';
+  }
+  function toggleCheck(el) {
+    const feito = el.classList.toggle('feito');
+    el.textContent = feito ? '✓' : '';
+    const texto = el.parentElement.querySelector('.objetivo-texto');
+    texto.classList.toggle('feito', feito);
+  }
+</script>
+<div id="toast"></div>
+
+</body>
+</html>
