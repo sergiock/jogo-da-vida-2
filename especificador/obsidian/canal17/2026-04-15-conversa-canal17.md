@@ -151,9 +151,33 @@ colaborador → servidor Railway → git commit → git push → GitHub → Serg
 
 ---
 
-## Estado ao fechar
+## Estado ao fechar (15/04)
 
 - Servidor rodando em localhost:8080 (commit automático ativo, push local sem token)
 - canal17/ com 3 posts de síntese + este log
 - GitHub atualizado (commit `7308f66`)
 - Arquitetura multi-colaborador: implementada localmente, aguardando deploy
+
+---
+
+## Deploy Railway — 16/04
+
+Deploy online em `jogo-da-vida-2.up.railway.app`.
+
+**Problemas encontrados e resolvidos:**
+
+1. **Railpack não detectou Python** → adicionado `requirements.txt` e `runtime.txt`
+2. **Variáveis de ambiente** — configuradas no Railway (Variables → service level):
+   `APP_BASE=/app`, `GITHUB_TOKEN`, `GIT_USER_NAME`, `GIT_USER_EMAIL`
+3. **Anexos não persistiam** → `_upload_anexo` agora chama `_git_commit` após salvar binário
+4. **Colaboradores A1/A2/A3** chegaram ao GitHub mas não apareciam no Obsidian local → resolvido com `git pull`; pasta `colaboradores/` presente no vault
+5. **Repositório errado** — diretório local `/actualsc/jogo-da-vida` apontava para repo `jogo-da-vida` (3 commits, sem o projeto). Projeto real está em `jogo-da-vida-2`, clonado para `/actualsc/jogo-da-vida-2`
+6. **BASE hardcoded** → corrigido para `Path(__file__).resolve().parents[2]` — detecta automaticamente independente do path local ou Railway
+7. **Commit Railway sobrepôs HTML** — commit `2b66757` (feito pelo servidor Railway) truncou `especificador.html` de 2793 para 752 linhas, removendo autor, anexos e resto da interface → restaurado a partir do commit `f03b8bc`
+8. **Cache do browser** — após restauração, browser servia versão antiga → solução: aba anônima (Cmd+Shift+N) ou hard refresh (Cmd+Shift+R)
+
+**Estado atual:**
+- Servidor local: `python3 /Users/sergio/Documents/actualsc/jogo-da-vida-2/dev/python/servidor_unico.py`
+- localhost:8080 funcionando com HTML completo (autor + anexos)
+- Railway online com redeploy automático a cada push
+- Colaboradores salvam em `colaboradores/{autor}/registros/` com commit+push automático
