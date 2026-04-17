@@ -27,7 +27,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 # ── Caminhos ──────────────────────────────────────────────────────────────────
-BASE     = Path(os.environ.get('APP_BASE', str(Path.home() / "Documents/actualsc/jogo-da-vida")))
+BASE     = Path(os.environ.get('APP_BASE', str(Path(__file__).resolve().parents[2])))
 OBSIDIAN = BASE / "especificador/obsidian"
 REGISTROS  = OBSIDIAN / "registros"
 CONSULTAS  = OBSIDIAN / "consultas"
